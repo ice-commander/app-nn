@@ -68,6 +68,9 @@ impl LocalFm {
                 root_icon: "/com/fm-ui/gtk/home.svg".to_string(),
                 root_icon_svg: None,
                 connection_id: None,
+                can_mount: false,
+                is_mounted: false,
+                mount_name: String::new(),
             },
             select_name: None,
         });

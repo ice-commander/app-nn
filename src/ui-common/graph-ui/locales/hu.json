@@ -1,0 +1,13 @@
+{
+  "graph.apply_btn": "Alkalmaz",
+  "graph.device_name_label": "Eszköz neve:",
+  "graph.device_name_placeholder": "Eszköz neve",
+  "graph.logged_in_as": "Bejelentkezve mint: %{user}",
+  "graph.this_android": "Ez az Android eszköz",
+  "graph.this_device": "Ez az eszköz",
+  "graph.this_ios": "Ez az iPhone/iPad",
+  "graph.this_linux": "Ez a Linux PC",
+  "graph.this_macos": "Ez az Apple Mac",
+  "graph.this_windows": "Ez a Windows PC",
+  "graph.welcome": "Üdvözöljük a(z) %{title} oldalon!"
+}

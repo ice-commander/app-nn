@@ -1977,3 +1977,9 @@ pub fn show_error(parent: &impl IsA<gtk::Widget>, title: &str, msg: &str) {
     dialog.add_response("ok", &*crate::i18n::tr("common.ok"));
     dialog.present(Some(parent));
 }
+
+#[derive(serde::Serialize, serde::Deserialize, Clone)]
+pub struct PeerConnection {
+    pub name: String,
+    pub peer_id: String,
+}

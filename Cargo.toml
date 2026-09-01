@@ -24,11 +24,30 @@ members = [
 	"src/ui-common/registry-ui",
 	"src/ui-common/viewer-ui",
 	"src/ui-common/process-ui",
-	"src/ui-common/updater-ui"
+	"src/ui-common/updater-ui",
+    "src/ui-common/node-auth",
+    "src/ui-common/graph-ui",
+    "submodules/p2p-common/client-core",
+    "submodules/p2p-common/nodeinnet-api",
+    "submodules/p2p-common/nodeinnet-p2p",
+    "submodules/p2p-common/p2p-node",
+    "submodules/p2p-functions/node-functions",
+    "submodules/p2p-functions/p2p-handlers",
+    "submodules/p2p-functions/web-davserver"
 ]
 resolver = "2"
 
 [workspace.dependencies]
+client-core = { path = "submodules/p2p-common/client-core", default-features = false }
+node-auth = { path = "src/ui-common/node-auth", default-features = false }
+gtk-graph-ui = { path = "src/ui-common/graph-ui" }
+nodeinnet-i18n = { package = "ic-i18n", path = "src/ui-common/i18n" }
+nodeinnet-api = { path = "submodules/p2p-common/nodeinnet-api" }
+nodeinnet-p2p = { path = "submodules/p2p-common/nodeinnet-p2p" }
+p2p-node = { path = "submodules/p2p-common/p2p-node", default-features = false }
+node-functions = { path = "submodules/p2p-functions/node-functions", default-features = false }
+p2p-handlers = { path = "submodules/p2p-functions/p2p-handlers", default-features = false }
+web-davserver = { path = "submodules/p2p-functions/web-davserver" }
 actix-web = "4.5.1"
 actix-web-httpauth = "0.8.1"
 actix-ws = "0.3"

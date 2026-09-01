@@ -14,10 +14,10 @@ export CARGO_TARGET_DIR="/home/builder/workdir/bin/distr/rpm/target"
 export CARGO_HOME="/home/builder/workdir/bin/distr/cargo-home-shared"
 node ./builder/gen-version.js gui rpm
 
-cargo build -p ice-commander-gtk --release
+cargo build -p nodeinnet-ice-commander-gtk --release
 
 mkdir -p ./bin/gtk-app/release/
-cp $CARGO_TARGET_DIR/release/ice-commander ./bin/gtk-app/release/ice-commander
+cp $CARGO_TARGET_DIR/release/nodeinnet-ice-commander ./bin/gtk-app/release/nodeinnet-ice-commander
 
 rm -rf $CARGO_TARGET_DIR/generate-rpm
 cd ./src/gtk-app

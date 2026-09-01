@@ -109,6 +109,17 @@ fn is_currently_active(
             }
             false
         }
+        crate::drives::AppDriveItem::RemotePeer {
+            peer_id,
+            resource_id,
+            ..
+        } => {
+            if let Some(conn_id) = router.provider().connection_id() {
+                let target_id = format!("p2p://{}@{}", peer_id, resource_id);
+                return conn_id == target_id;
+            }
+            false
+        }
     }
 }
 
@@ -116,6 +127,8 @@ pub fn create_drives_toolbar(
     router: Rc<PanelRouter>,
     stack: Stack,
     selector_updaters: Rc<std::cell::RefCell<Vec<Rc<dyn Fn()>>>>,
+    net_tx: crate::core::NetCmdSender,
+    online_nodes: Rc<std::cell::RefCell<Vec<nodeinnet_p2p::NodeInfo>>>,
     shift_held: Rc<std::cell::Cell<bool>>,
     config: client_config::AppConfig,
     nav_hook: Rc<RefCell<Option<Rc<dyn Fn()>>>>,
@@ -231,7 +244,25 @@ pub fn create_drives_toolbar(
                 .unwrap_or(false)
                 && !shift_active;
 
-            let all_drives = crate::drives::get_all_app_drives(&config);
+            let active_p2p = {
+                router
+                    .provider()
+                    .connection_id()
+                    .and_then(|conn_id| {
+                        if conn_id.starts_with("p2p://") {
+                            let parts: Vec<&str> = conn_id["p2p://".len()..].split('@').collect();
+                            if parts.len() == 2 {
+                                Some((parts[0].to_string(), parts[1].to_string()))
+                            } else {
+                                None
+                            }
+                        } else {
+                            None
+                        }
+                    })
+            };
+
+            let all_drives = crate::drives::get_all_app_drives(&config, &online_nodes.borrow(), active_p2p);
 
             let mut populated = all_drives.clone();
 
@@ -292,6 +323,7 @@ pub fn create_drives_toolbar(
         monitor.connect_mount_removed(move |_, _| update4());
     }
 
+    let net_tx_dd = net_tx.clone();
     let router_dd = router.clone();
     let stack_dd = stack.clone();
     let drive_items_dd = drive_items.clone();
@@ -311,10 +343,11 @@ pub fn create_drives_toolbar(
                 return;
             }
 
-            match crate::drives::activate_drive_item(&item.item, &router_dd) {
+            match crate::drives::activate_drive_item(&item.item, &router_dd, &net_tx_dd) {
                 crate::drives::DriveActivation::Shown => {
                     stack_dd.set_visible_child_name("filemanager");
                 }
+                crate::drives::DriveActivation::Noop => {}
                 crate::drives::DriveActivation::NeedsAsyncMount(vol_inner) => {
                     let router_inner = router_dd.clone();
                     let stack_inner = stack_dd.clone();

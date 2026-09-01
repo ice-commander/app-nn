@@ -1,8 +1,16 @@
 use adw::prelude::*;
 use gtk::{Button, Label, Orientation};
 
+#[cfg(feature = "nodeinnet")]
+use client_core;
+#[cfg(not(feature = "nodeinnet"))]
+use crate::core::client_core;
+
+
 pub(super) struct HeaderResult {
     pub bar: adw::HeaderBar,
+    pub login_label: Label,
+    pub on_open_account: std::rc::Rc<dyn Fn()>,
     pub settings_btn: Button,
     pub on_open_sysinfo: std::rc::Rc<dyn Fn()>,
 }
@@ -10,6 +18,11 @@ pub(super) struct HeaderResult {
 pub(super) fn build_header_bar(
     window: &adw::ApplicationWindow,
     config: &client_config::AppConfig,
+    net_tx: &crate::core::NetCmdSender,
+    my_info: &nodeinnet_p2p::NodeInfo,
+    ws_state: std::rc::Rc<std::cell::RefCell<client_core::WsState>>,
+    active_dialog_graph: std::rc::Rc<std::cell::RefCell<Option<crate::netgraph::NetGraph>>>,
+    online_nodes: std::rc::Rc<std::cell::RefCell<Vec<nodeinnet_p2p::NodeInfo>>>,
     selector_updaters: std::rc::Rc<std::cell::RefCell<Vec<std::rc::Rc<dyn Fn()>>>>,
     global_on_connect: std::rc::Rc<std::cell::RefCell<Option<std::rc::Rc<dyn Fn(crate::connection_manager::FtpConnection) + 'static>>>>,
 ) -> HeaderResult {
@@ -139,6 +152,58 @@ pub(super) fn build_header_bar(
         theme_btn_img.set_resource(Some("/com/icecommander/gtk/night.svg"));
     }
 
+    let login_btn = Button::builder()
+        .tooltip_text("NodeInNet Account / P2P Status")
+        .build();
+    login_btn.set_cursor_from_name(Some("pointer"));
+
+    let login_btn_box = gtk::Box::builder()
+        .orientation(Orientation::Horizontal)
+        .spacing(6)
+        .build();
+    let login_btn_icon = gtk::Image::from_resource("/com/icecommander/gtk/nodeinnet-logo.svg");
+    login_btn_icon.set_pixel_size(20);
+    let login_btn_label = Label::new(Some("Disconnected"));
+
+    login_btn_box.append(&login_btn_icon);
+    login_btn_box.append(&login_btn_label);
+    login_btn.set_child(Some(&login_btn_box));
+
+    let window_account = window.clone();
+    let net_tx_dialog = net_tx.clone();
+    let my_info_dialog = my_info.clone();
+    let login_lbl_dialog = login_btn_label.clone();
+    let ws_state_dialog = ws_state.clone();
+    let active_dialog_graph_dialog = active_dialog_graph.clone();
+    let online_nodes_dialog = online_nodes.clone();
+    let selector_updaters_dialog = selector_updaters.clone();
+    let config_dialog = config.clone();
+
+    let on_open_account: std::rc::Rc<dyn Fn()> = std::rc::Rc::new(move || {
+        let updaters = selector_updaters_dialog.clone();
+        let on_res_changed = std::rc::Rc::new(move || {
+            for updater in updaters.borrow().iter() {
+                updater();
+            }
+        });
+        crate::account::show_account_dialog(
+            window_account.upcast_ref(),
+            config_dialog.clone(),
+            &ws_state_dialog,
+            &active_dialog_graph_dialog,
+            &online_nodes_dialog,
+            &my_info_dialog,
+            &net_tx_dialog,
+            &login_lbl_dialog,
+            Some(on_res_changed),
+        );
+    });
+
+    let on_open_account_btn = on_open_account.clone();
+    login_btn.connect_clicked(move |_| {
+        on_open_account_btn();
+    });
+
     let conn_btn = Button::builder()
         .tooltip_text("FTP/SFTP Connections")
         .build();
@@ -234,6 +299,7 @@ pub(super) fn build_header_bar(
     header_bar.pack_start(&settings_btn);
     header_bar.pack_start(&sysinfo_btn);
     header_bar.pack_end(&theme_btn);
+    header_bar.pack_end(&login_btn);
     header_bar.pack_end(&conn_btn);
     if let Some(ref web_btn) = web_btn {
         header_bar.pack_end(web_btn);
@@ -241,7 +307,9 @@ pub(super) fn build_header_bar(
 
     HeaderResult {
         bar: header_bar,
+        login_label: login_btn_label,
         settings_btn,
         on_open_sysinfo,
+        on_open_account,
     }
 }

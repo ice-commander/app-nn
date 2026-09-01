@@ -1,3 +1,8 @@
+#[cfg(feature = "nodeinnet")]
+use client_core;
+#[cfg(not(feature = "nodeinnet"))]
+use crate::core::client_core;
+
 use crate::connection_manager::FtpConnection;
 use virtualfs::utils::{get_drives, DriveInfo};
 use panel_router::PanelRouter;
@@ -11,6 +16,11 @@ pub enum AppDriveItem {
     LocalDrive(String),
     Volume(gtk::gio::Volume),
     NetConnection(FtpConnection),
+    RemotePeer {
+        peer_id: String,
+        resource_id: String,
+        name: String,
+    },
 }
 
 #[derive(Clone)]
@@ -29,6 +39,13 @@ pub struct AppDrive {
 pub enum DriveActivation {
     Shown,
     NeedsAsyncMount(gtk::gio::Volume),
+    Noop,
+}
+
+#[derive(serde::Deserialize, Clone, Debug)]
+struct SavedPeerConnection {
+    name: String,
+    peer_id: String,
 }
 
 impl AppDrive {
@@ -38,11 +55,16 @@ impl AppDrive {
             AppDriveItem::RootFs | AppDriveItem::UserHome | AppDriveItem::LocalDrive(_) => true,
             AppDriveItem::Volume(vol) => vol.get_mount().is_some(),
             AppDriveItem::NetConnection(_) => false,
+            AppDriveItem::RemotePeer { .. } => false,
         }
     }
 }
 
-pub fn get_all_app_drives(config: &client_config::AppConfig) -> Vec<AppDrive> {
+pub fn get_all_app_drives(
+    config: &client_config::AppConfig,
+    online_nodes: &[nodeinnet_p2p::NodeInfo],
+    active_p2p: Option<(String, String)>,
+) -> Vec<AppDrive> {
     let mut drives = Vec::new();
     let favorites = config.get::<Vec<String>>("ui.favorites").unwrap_or_default();
 
@@ -148,10 +170,155 @@ pub fn get_all_app_drives(config: &client_config::AppConfig) -> Vec<AppDrive> {
         });
     }
 
+    let peer_conns: Vec<SavedPeerConnection> = config.get("ui.peers").unwrap_or_default();
+    let mut added_p2p_keys = std::collections::HashSet::new();
+
+    let active_key = active_p2p
+        .as_ref()
+        .map(|(peer_id, resource_id)| format!("p2p://{}@{}", peer_id, resource_id));
+
+    if let Some((peer_id, resource_id)) = active_p2p {
+        let key = format!("p2p://{}@{}", peer_id, resource_id);
+        let name = get_p2p_drive_name(&peer_id, &resource_id, config);
+        added_p2p_keys.insert(key.clone());
+        drives.push(AppDrive {
+            item: AppDriveItem::RemotePeer {
+                peer_id: peer_id.clone(),
+                resource_id: resource_id.clone(),
+                name: name.clone(),
+            },
+            name,
+            subtitle: format!("Resource ID: {} | Peer ID: {}", resource_id, peer_id),
+            icon: "/com/icecommander/gtk/connect.svg".to_string(),
+            is_favorite: favorites.contains(&key),
+            is_online: true,
+            key,
+            drive_info: None,
+        });
+    }
+
+    for peer in &peer_conns {
+        if let Some(node) = online_nodes.iter().find(|n| n.id == peer.peer_id && n.is_online) {
+            let fs_resources: Vec<&nodeinnet_p2p::SharedResource> = node
+                .resources
+                .iter()
+                .filter(|r| r.resource_type == nodeinnet_p2p::ResourceType::Filesystem)
+                .collect();
+
+            if fs_resources.is_empty() {
+                let key = format!("p2p://{}", peer.peer_id);
+                if !added_p2p_keys.contains(&key) {
+                    added_p2p_keys.insert(key.clone());
+                    drives.push(AppDrive {
+                        item: AppDriveItem::RemotePeer {
+                            peer_id: peer.peer_id.clone(),
+                            resource_id: String::new(),
+                            name: peer.name.clone(),
+                        },
+                        name: peer.name.clone(),
+                        subtitle: peer.peer_id.clone(),
+                        icon: "/com/icecommander/gtk/connect.svg".to_string(),
+                        is_favorite: favorites.contains(&key),
+                        is_online: true,
+                        key,
+                        drive_info: None,
+                    });
+                }
+            } else {
+                for fs_res in fs_resources {
+                    let key = format!("p2p://{}@{}", peer.peer_id, fs_res.id);
+                    if !added_p2p_keys.contains(&key) {
+                        added_p2p_keys.insert(key.clone());
+                        let name = format!("{} ({})", fs_res.name, peer.name);
+                        drives.push(AppDrive {
+                            item: AppDriveItem::RemotePeer {
+                                peer_id: peer.peer_id.clone(),
+                                resource_id: fs_res.id.clone(),
+                                name: name.clone(),
+                            },
+                            name,
+                            subtitle: format!("Resource ID: {} | Peer ID: {}", fs_res.id, peer.peer_id),
+                            icon: "/com/icecommander/gtk/connect.svg".to_string(),
+                            is_favorite: favorites.contains(&key),
+                            is_online: true,
+                            key,
+                            drive_info: None,
+                        });
+                    }
+                }
+            }
+        } else {
+            let key = format!("p2p://{}", peer.peer_id);
+            if !added_p2p_keys.contains(&key) {
+                added_p2p_keys.insert(key.clone());
+                drives.push(AppDrive {
+                    item: AppDriveItem::RemotePeer {
+                        peer_id: peer.peer_id.clone(),
+                        resource_id: String::new(),
+                        name: peer.name.clone(),
+                    },
+                    name: crate::i18n::trf("drives.offline_suffix", &[("name", &*(peer.name.clone()).to_string())]).to_string(),
+                    subtitle: peer.peer_id.clone(),
+                    icon: "/com/icecommander/gtk/connect.svg".to_string(),
+                    is_favorite: favorites.contains(&key),
+                    is_online: false,
+                    key,
+                    drive_info: None,
+                });
+            }
+        }
+    }
+
+    for node in online_nodes {
+        if !node.is_online {
+            continue;
+        }
+        let is_saved = peer_conns.iter().any(|p| p.peer_id == node.id);
+        if is_saved {
+            continue;
+        }
+
+        for fs_res in &node.resources {
+            if fs_res.resource_type == nodeinnet_p2p::ResourceType::Filesystem {
+                let key = format!("p2p://{}@{}", node.id, fs_res.id);
+                if Some(&key) == active_key.as_ref() {
+                    continue;
+                }
+                if !added_p2p_keys.contains(&key) {
+                    added_p2p_keys.insert(key.clone());
+                    let node_display_name = if node.name.is_empty() {
+                        crate::i18n::tr("drives.unnamed_device").to_string()
+                    } else {
+                        node.name.clone()
+                    };
+                    let name = format!("{} ({})", fs_res.name, node_display_name);
+                    drives.push(AppDrive {
+                        item: AppDriveItem::RemotePeer {
+                            peer_id: node.id.clone(),
+                            resource_id: fs_res.id.clone(),
+                            name: name.clone(),
+                        },
+                        name,
+                        subtitle: format!("Resource ID: {} | Peer ID: {}", fs_res.id, node.id),
+                        icon: "/com/icecommander/gtk/connect.svg".to_string(),
+                        is_favorite: favorites.contains(&key),
+                        is_online: true,
+                        key,
+                        drive_info: None,
+                    });
+                }
+            }
+        }
+    }
+
     drives
 }
 
-pub fn activate_drive_item(item: &AppDriveItem, router: &Rc<PanelRouter>) -> DriveActivation {
+pub fn activate_drive_item(
+    item: &AppDriveItem,
+    router: &Rc<PanelRouter>,
+    #[allow(unused_variables)] net_tx: &crate::core::NetCmdSender,
+) -> DriveActivation {
     match item {
         AppDriveItem::RootFs => {
             router.open_local_path("/".to_string());
@@ -229,5 +396,47 @@ pub fn activate_drive_item(item: &AppDriveItem, router: &Rc<PanelRouter>) -> Dri
             }
             DriveActivation::Shown
         }
+        #[cfg(feature = "nodeinnet")]
+        AppDriveItem::RemotePeer {
+            peer_id,
+            resource_id,
+            ..
+        } => {
+            let remote_rpc = Rc::new(virtualfs::p2p_rpc::RemoteFileSystemRpc {
+                net_tx: net_tx.clone(),
+                resource_id: resource_id.clone(),
+                peer_id: peer_id.clone(),
+            });
+            let _ = net_tx.try_send(client_core::NetCmd::Call(peer_id.clone()));
+            router.mount_provider(remote_rpc, resource_id.clone(), "/".to_string());
+            DriveActivation::Shown
+        }
+        #[cfg(not(feature = "nodeinnet"))]
+        AppDriveItem::RemotePeer { .. } => DriveActivation::Noop,
+    }
+}
+
+fn get_p2p_drive_name(peer_id: &str, resource_id: &str, config: &client_config::AppConfig) -> String {
+    let peer_conns = config.get::<Vec<SavedPeerConnection>>("ui.peers").unwrap_or_default();
+    let resolved_peer_name = if let Some(peer) = peer_conns.iter().find(|p| p.peer_id == peer_id) {
+        Some(peer.name.clone())
+    } else if let Some(online_name) = nodeinnet_p2p::get_known_peer_name(peer_id) {
+        Some(online_name)
+    } else {
+        None
+    };
+
+    let resolved_resource_name = nodeinnet_p2p::get_known_resource_name(peer_id, resource_id)
+        .unwrap_or_else(|| resource_id.to_string());
+
+    if let Some(peer_name) = resolved_peer_name {
+        format!("{} ({})", resolved_resource_name, peer_name)
+    } else {
+        let short_id = if peer_id.len() > 12 {
+            format!("{}...{}", &peer_id[0..6], &peer_id[peer_id.len() - 6..])
+        } else {
+            peer_id.to_string()
+        };
+        format!("{} ({})", resolved_resource_name, short_id)
     }
 }

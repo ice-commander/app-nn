@@ -103,5 +103,8 @@
     <!-- Theme preview screenshots for the setup wizard's clickable theme picker. -->
     <file>ice-commander-gtk-light.jpg</file>
     <file>ice-commander-gtk-dark.jpg</file>
+      <file>nodeinnet-fm.svg</file>
+      <file>nodeinnet-logo.svg</file>
+      <file>membership-card.svg</file>
   </gresource>
 </gresources>

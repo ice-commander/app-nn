@@ -85,6 +85,7 @@
   "fm.rename_selected": "Premenovať vybrané",
   "fm.rename_title": "Premenovať položku",
   "fm.root_tooltip": "Koreň",
+  "fm.select_file_upload": "Vybrať súbor na nahranie",
   "fm.select_mask_placeholder": "Vybrať podľa masky, napr. *.txt",
   "fm.select_other_source": "Vybrať iný zdroj",
   "fm.small_icons": "Malé ikony",
@@ -98,11 +99,18 @@
   "fm.status.selected_multiple": "Vybraté: priečinky: %{folders}, súbory: %{files}",
   "fm.to": "Cieľ:",
   "fm.upload_file": "Nahrať súbor do aktuálneho priečinka",
+  "fm.webdav.cancel": "Zrušiť",
   "fm.webdav.close": "Zatvoriť",
   "fm.webdav.creds_format": "\n\nPrihlasovacie údaje (automaticky generované):\nPoužívateľ: %{user}\nHeslo: %{pass}",
+  "fm.webdav.mount_body": "Pripojiť „%{name}“ ako lokálny disk? Zostane v správcovi súborov, kým ho neodpojíte.",
+  "fm.webdav.mount_btn": "Pripojiť",
+  "fm.webdav.mount_title": "Pripojiť disk?",
   "fm.webdav.running_desc": "WebDAV server BEŽÍ na porte %{port}.\n\nJednotka je pripojená. Kliknutím na 'Zastaviť server' ju odpojíte a zastavíte server.",
   "fm.webdav.start_desc": "Spustiť lokálny WebDAV server na porte %{port}?%{creds}\n\nPripojíme jednotku k vášmu systému:",
   "fm.webdav.start_server": "Spustiť server",
   "fm.webdav.stop_server": "Zastaviť server",
-  "fm.webdav.title": "WebDAV: %{name}"
+  "fm.webdav.title": "WebDAV: %{name}",
+  "fm.webdav.unmount_body": "Odpojiť „%{name}“? Súbory otvorené z tohto disku môžu prestať fungovať.",
+  "fm.webdav.unmount_btn": "Odpojiť",
+  "fm.webdav.unmount_title": "Odpojiť disk?"
 }

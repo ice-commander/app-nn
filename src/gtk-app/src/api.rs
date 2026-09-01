@@ -107,6 +107,9 @@ pub struct GtkBackend {
     pub right: crate::panel_builder::PanelInfo,
     pub config: client_config::AppConfig,
     pub selector_updaters: std::rc::Rc<std::cell::RefCell<Vec<std::rc::Rc<dyn Fn()>>>>,
+    pub online_nodes: std::rc::Rc<std::cell::RefCell<Vec<nodeinnet_p2p::NodeInfo>>>,
+    pub net_tx: crate::core::NetCmdSender,
+    pub my_info: nodeinnet_p2p::NodeInfo,
 }
 
 impl GtkBackend {
@@ -274,7 +277,7 @@ impl PanelBackend for GtkBackend {
     }
 
     fn get_drives(&self) -> Vec<ApiDrive> {
-        let all = crate::drives::get_all_app_drives(&self.config);
+        let all = crate::drives::get_all_app_drives(&self.config, &self.online_nodes.borrow(), None);
         all.iter()
             .map(|d| {
                 let (kind, path) = match &d.item {
@@ -286,6 +289,7 @@ impl PanelBackend for GtkBackend {
                     crate::drives::AppDriveItem::LocalDrive(p) => ("drive", p.clone()),
                     crate::drives::AppDriveItem::Volume(_) => ("volume", String::new()),
                     crate::drives::AppDriveItem::NetConnection(_) => ("net", String::new()),
+                    crate::drives::AppDriveItem::RemotePeer { .. } => ("peer", String::new()),
                 };
                 let icon = d.icon.rsplit('/').next().unwrap_or(&d.icon).to_string();
                 ApiDrive {
@@ -303,9 +307,9 @@ impl PanelBackend for GtkBackend {
     }
     async fn activate_source(&self, side: PanelSide, key: String) -> ApiResult<()> {
         let router = self.router(side);
-        let all = crate::drives::get_all_app_drives(&self.config);
+        let all = crate::drives::get_all_app_drives(&self.config, &self.online_nodes.borrow(), None);
         match all.iter().find(|d| d.key == key) {
-            Some(d) => match crate::drives::activate_drive_item(&d.item, &router) {
+            Some(d) => match crate::drives::activate_drive_item(&d.item, &router, &self.net_tx) {
                 crate::drives::DriveActivation::Shown => {
                     router.switch_to_selector(false);
                     Ok(())
@@ -313,6 +317,7 @@ impl PanelBackend for GtkBackend {
                 crate::drives::DriveActivation::NeedsAsyncMount(_) => {
                     Err("Mount this drive in the desktop app first".to_string())
                 }
+                crate::drives::DriveActivation::Noop => Ok(()),
             },
             None => Err(format!("unknown source key: {key}")),
         }
@@ -574,6 +579,9 @@ pub fn start_api_dispatcher(
     right_info: crate::panel_builder::PanelInfo,
     config: client_config::AppConfig,
     selector_updaters: std::rc::Rc<std::cell::RefCell<Vec<std::rc::Rc<dyn Fn()>>>>,
+    online_nodes: std::rc::Rc<std::cell::RefCell<Vec<nodeinnet_p2p::NodeInfo>>>,
+    net_tx: crate::core::NetCmdSender,
+    my_info: nodeinnet_p2p::NodeInfo,
     left_term: TerminalBridge,
     right_term: TerminalBridge,
     term_expand: std::rc::Rc<dyn Fn(PanelSide, bool)>,
@@ -583,6 +591,9 @@ pub fn start_api_dispatcher(
         right: right_info,
         config,
         selector_updaters,
+        online_nodes,
+        net_tx,
+        my_info,
     });
 
     let (gui_tx, gui_rx) = std::sync::mpsc::channel::<ApiCmd>();
@@ -602,7 +613,9 @@ pub fn start_api_dispatcher(
             let term_expand = term_expand.clone();
             glib::spawn_future_local(async move {
                 if let Some(cmd) = dispatch_core(&*backend, cmd).await {
-                    handle_gtk_only(cmd, &backend, &left_term, &right_term, &term_expand);
+                    if let Some(cmd) = handle_account(cmd, &backend).await {
+                        handle_gtk_only(cmd, &backend, &left_term, &right_term, &term_expand);
+                    }
                 }
             });
         }
@@ -790,4 +803,91 @@ impl GtkBackend {
         let _ = src_router.refresh().await;
         Ok(())
     }
+}
+
+#[cfg(feature = "nodeinnet")]
+async fn handle_account(cmd: ApiCmd, backend: &GtkBackend) -> Option<ApiCmd> {
+    match cmd {
+        ApiCmd::AccountLogin { login, password, guest, reply } => {
+            let api_base = nodeinnet_p2p::api_base();
+            let config = &backend.config;
+            let result = match client_core::auth::login(
+                &api_base,
+                &login,
+                &password,
+                config.turn_region(),
+            )
+            .await
+            {
+                Ok(resp) => {
+                    config.set("app.refresh_token", resp.refresh_token.clone());
+                    config.set("app.account_login", login.clone());
+                    config.set("app.is_guest", guest);
+                    config.set("app.premium", resp.premium != 0);
+                    config.save();
+                    match client_core::auth::refresh_access_token(
+                        &api_base,
+                        &resp.refresh_token,
+                        config.turn_region(),
+                    )
+                    .await
+                    {
+                        Ok(refresh) => {
+                            let url = format!(
+                                "{}?token={}&session_id={}",
+                                refresh.ws_url, refresh.access_token, backend.my_info.id
+                            );
+                            let mut my_info = backend.my_info.clone();
+                            my_info.resources =
+                                crate::shares::build_all_resources(config, &my_info.id);
+                            let _ = backend
+                                .net_tx
+                                .send(client_core::NetCmd::Connect(url, my_info, refresh.turn))
+                                .await;
+                            Ok(())
+                        }
+                        Err(e) => Err(e),
+                    }
+                }
+                Err(e) => Err(e),
+            };
+            let _ = reply.send(result);
+            None
+        }
+        ApiCmd::AddShare { name, path, reply } => {
+            let config = &backend.config;
+            let stored = crate::shares::add_share(config, &name, &path);
+            crate::shares::reload_resources(config, &backend.my_info.id, &backend.net_tx);
+            let _ = reply.send(Ok(serde_json::json!({ "name": stored, "path": path })));
+            None
+        }
+        ApiCmd::AccountStatus { reply } => {
+            let config = &backend.config;
+            let logged_in = config
+                .get::<String>("app.refresh_token")
+                .map(|t| !t.is_empty())
+                .unwrap_or(false);
+            let _ = reply.send(Ok(serde_json::json!({
+                "logged_in": logged_in,
+                "device_id": backend.my_info.id,
+                "login": config.get::<String>("app.account_login").unwrap_or_default(),
+                "is_guest": config.get::<bool>("app.is_guest").unwrap_or(false),
+                "premium": config.get::<bool>("app.premium").unwrap_or(false),
+            })));
+            None
+        }
+        ApiCmd::AccountLogout { reply } => {
+            let _ = backend.net_tx.send(client_core::NetCmd::Disconnect).await;
+            backend.config.set("app.refresh_token", String::new());
+            backend.config.save();
+            let _ = reply.send(Ok(()));
+            None
+        }
+        other => Some(other),
+    }
+}
+
+#[cfg(not(feature = "nodeinnet"))]
+async fn handle_account(cmd: ApiCmd, _backend: &GtkBackend) -> Option<ApiCmd> {
+    Some(cmd)
 }

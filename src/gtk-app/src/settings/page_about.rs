@@ -27,7 +27,11 @@ pub(super) fn build(page_box: &Box, parent: &gtk::Window) {
     about_box.append(&logo_img);
 
     let app_name_lbl = Label::builder()
-        .label("<span size='xx-large' weight='bold'>Ice Commander</span>")
+        .label(if cfg!(feature = "nodeinnet") {
+            "<span size='xx-large' weight='bold'>Ice Commander Node.In.Net mod</span>"
+        } else {
+            "<span size='xx-large' weight='bold'>Ice Commander</span>"
+        })
         .use_markup(true)
         .build();
     about_box.append(&app_name_lbl);

@@ -348,6 +348,14 @@ pub(super) fn build_pdf_content(ctx: &gtk_viewer_ui::ViewerCtx, bytes: Vec<u8>) 
                     } else if cfg!(target_os = "linux") {
                         if exe_dir_c.join("libpdfium.so").exists() {
                             exe_dir_c.join("libpdfium.so")
+                        } else if std::path::Path::new(
+                            "/usr/lib/nodeinnet-ice-commander/libpdfium.so",
+                        )
+                        .exists()
+                        {
+                            std::path::PathBuf::from(
+                                "/usr/lib/nodeinnet-ice-commander/libpdfium.so",
+                            )
                         } else if std::path::Path::new("/usr/lib/ice-commander/libpdfium.so").exists() {
                             std::path::PathBuf::from("/usr/lib/ice-commander/libpdfium.so")
                         } else if std::path::Path::new("/usr/lib/libpdfium.so").exists() {

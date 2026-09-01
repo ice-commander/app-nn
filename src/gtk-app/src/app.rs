@@ -1,5 +1,10 @@
 use crate::mainwindow::MainWindow;
 
+#[cfg(feature = "nodeinnet")]
+use client_core;
+#[cfg(not(feature = "nodeinnet"))]
+use crate::core::client_core;
+
 pub struct Application;
 
 impl Application {
@@ -9,10 +14,29 @@ impl Application {
         gtk_terminal_ui::init_resources();
         gtk_registry_ui::init_resources();
         gtk_process_ui::init_resources();
+        #[cfg(feature = "nodeinnet")]
+        gtk_graph_ui::init_resources();
+        #[cfg(feature = "nodeinnet")]
+        node_auth::init_resources();
     }
 
     pub fn run(app: &adw::Application, config: client_config::AppConfig) {
         ic_utils::app::init_exe_path();
+
+        let (ui_tx, ui_rx) = std::sync::mpsc::channel::<crate::core::UiEvent>();
+
+        #[cfg(feature = "nodeinnet")]
+        let (net_tx, net_rx) = tokio::sync::mpsc::channel::<client_core::NetCmd>(100);
+        #[cfg(feature = "nodeinnet")]
+        let net_tx_bg = net_tx.clone();
+        #[cfg(not(feature = "nodeinnet"))]
+        let net_tx = crate::core::NetCmdSender;
+
+        #[cfg(feature = "nodeinnet")]
+        let handler: std::sync::Arc<dyn client_core::AppEventHandler> =
+            std::sync::Arc::new(crate::core::GtkFmEventHandler {
+                ui_tx: ui_tx.clone(),
+            });
 
         let mut needs_save = false;
 
@@ -37,6 +61,34 @@ impl Application {
             config.save();
         }
 
+        #[allow(unused_mut)]
+        let mut priv_key_str = String::new();
+        #[allow(unused_mut)]
+        let mut pub_key_str = String::new();
+
+        #[cfg(feature = "nodeinnet")]
+        {
+            let mut priv_val = config.get::<String>("app.private_key_b64").unwrap_or_default();
+            let mut pub_val = config.get::<String>("app.public_key_b64").unwrap_or_default();
+            if priv_val.is_empty() || pub_val.is_empty() {
+                let (new_priv, new_pub) = nodeinnet_p2p::generate_ed25519_keypair();
+                config.set("app.private_key_b64", &new_priv);
+                config.set("app.public_key_b64", &new_pub);
+                priv_val = new_priv;
+                pub_val = new_pub;
+                needs_save = true;
+            }
+            priv_key_str = priv_val;
+            pub_key_str = pub_val;
+        }
+
+        #[cfg(feature = "nodeinnet")]
+        if let Some(ep) = config.get::<String>("net.api_endpoint") {
+            if !ep.is_empty() {
+                nodeinnet_p2p::set_api_base(&ep);
+            }
+        }
+
         crate::logging::apply(&config);
         ic_logging::info!(
             "Ice Commander {} ({}) starting",
@@ -55,6 +107,42 @@ impl Application {
             app_type: "desktop".to_string(),
             build_type: common::version::BUILD_TYPE.to_string(),
         };
+
+        let node_info = nodeinnet_p2p::NodeInfo {
+            id: my_info.id.clone(),
+            name: my_info.name.clone(),
+            os: my_info.os.clone(),
+            version: my_info.version.clone(),
+            app_type: my_info.app_type.clone(),
+            build_type: my_info.build_type.clone(),
+            public_key: pub_key_str,
+            resources: crate::shares::build_all_resources(&config, &my_info.id),
+            is_online: true,
+            last_used: 0,
+            is_temporary: config.get::<bool>("app.is_guest").unwrap_or(false),
+        };
+
+        #[cfg(feature = "nodeinnet")]
+        {
+            p2p_node::set_app_version(common::version::APP_VERSION);
+            p2p_handlers::install(
+                p2p_handlers::Capabilities::FILESYSTEM | p2p_handlers::Capabilities::SYSTEM_INFO,
+                p2p_handlers::HostSettings::default(),
+            );
+        }
+
+        #[cfg(feature = "nodeinnet")]
+        if config.get::<bool>("ui.p2p_enabled").unwrap_or(true) {
+            client_core::network::start_network_thread(
+                net_rx,
+                net_tx_bg,
+                handler,
+                node_info.clone(),
+                priv_key_str,
+                std::sync::Arc::new(client_config::ConfigPeerStore::new(config.clone())),
+                config.get::<bool>("net.local_discovery").unwrap_or(true),
+            );
+        }
 
         print_startup_banner(&my_info);
 
@@ -96,7 +184,17 @@ impl Application {
             None
         };
 
-        MainWindow::create(app, my_info, config.clone(), api_tx, network_warning);
+        MainWindow::create(
+            app,
+            my_info,
+            node_info,
+            net_tx,
+            ui_tx,
+            ui_rx,
+            config.clone(),
+            api_tx,
+            network_warning,
+        );
     }
 }
 

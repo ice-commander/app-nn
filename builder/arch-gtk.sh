@@ -9,7 +9,7 @@ export CARGO_TARGET_DIR="/home/builder/workdir/bin/distr/zst/target"
 export CARGO_HOME="/home/builder/workdir/bin/distr/cargo-home-shared"
 node ./builder/gen-version.js gui zst
 
-cargo build -p ice-commander-gtk --release
+cargo build -p nodeinnet-ice-commander-gtk --release
 cd ./src/gtk-app
 # Disable LTO, debug packages, and stripping from makepkg to preserve exact binary MD5
 echo "OPTIONS+=(!strip !lto !debug)" > ~/.makepkg.conf
@@ -18,7 +18,7 @@ echo "OPTIONS+=(!strip !lto !debug)" > ~/.makepkg.conf
 mkdir -p /tmp/ice-commander-arch-build
 
 cat <<EOF > /tmp/ice-commander-arch-build/PKGBUILD
-pkgname=ice-commander
+pkgname=nodeinnet-ice-commander
 pkgver=$VERSION
 pkgrel=1
 pkgdesc="Ice Commander - Dual-Pane P2P File Manager"
@@ -30,12 +30,12 @@ source=()
 sha256sums=()
 
 package() {
-    install -Dm755 "/home/builder/workdir/bin/distr/zst/target/release/ice-commander" "\$pkgdir/usr/bin/ice-commander"
-    install -Dm644 "/home/builder/workdir/src/gtk-app/assets/com.icecommander.gtkapp.desktop" "\$pkgdir/usr/share/applications/com.icecommander.gtkapp.desktop"
-    install -Dm644 "/home/builder/workdir/src/gtk-app/assets/app-logo-512.png" "\$pkgdir/usr/share/icons/hicolor/512x512/apps/com.icecommander.gtkapp.png"
-    install -Dm644 "/home/builder/workdir/artifacts/libpdfium.so" "\$pkgdir/usr/lib/ice-commander/libpdfium.so"
+    install -Dm755 "/home/builder/workdir/bin/distr/zst/target/release/nodeinnet-ice-commander" "\$pkgdir/usr/bin/nodeinnet-ice-commander"
+    install -Dm644 "/home/builder/workdir/src/gtk-app/assets/com.nodeinnet.icecommander.gtkapp.desktop" "\$pkgdir/usr/share/applications/com.nodeinnet.icecommander.gtkapp.desktop"
+    install -Dm644 "/home/builder/workdir/src/gtk-app/assets/app-logo-512.png" "\$pkgdir/usr/share/icons/hicolor/512x512/apps/com.nodeinnet.icecommander.gtkapp.png"
+    install -Dm644 "/home/builder/workdir/artifacts/libpdfium.so" "\$pkgdir/usr/lib/nodeinnet-ice-commander/libpdfium.so"
     for lic in /home/builder/workdir/assets/licenses/*.txt; do
-        install -Dm644 "\$lic" "\$pkgdir/usr/share/doc/ice-commander/licenses/\$(basename "\$lic")"
+        install -Dm644 "\$lic" "\$pkgdir/usr/share/doc/nodeinnet-ice-commander/licenses/\$(basename "\$lic")"
     done
 }
 EOF

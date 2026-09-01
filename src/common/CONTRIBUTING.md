@@ -4,7 +4,7 @@ Thanks for taking the time to contribute.
 
 This repository holds the small pieces that belong to no single domain: the
 application error type, the update package and its installer, the build version
-stamp, and the app-wide network timeout. It is consumed as a path dependency, so a
+stamp, and the app-wide network timeout. It is consumed as a submodule, so a
 change here reaches every application that embeds it.
 
 Its defining property is that it **depends on nothing else of ours**. Anything
@@ -66,7 +66,7 @@ same terms as the project — **MIT OR Apache-2.0**, at the user's option. See
 
 This repository has no workspace manifest of its own: the consuming project
 defines the workspace. Clone it directly to work on it, or work inside a
-project that already includes it.
+project that already includes it as a submodule.
 
 ```sh
 git clone https://github.com/ice-commander/common.git

@@ -85,6 +85,7 @@
   "fm.rename_selected": "Redenumește selecția",
   "fm.rename_title": "Redenumește elementul",
   "fm.root_tooltip": "Rădăcină",
+  "fm.select_file_upload": "Selectați fișierul de încărcat",
   "fm.select_mask_placeholder": "Selectează după mască, ex. *.txt",
   "fm.select_other_source": "Selectează altă sursă",
   "fm.small_icons": "Pictograme mici",
@@ -98,11 +99,18 @@
   "fm.status.selected_multiple": "Selectat: %{folders}, %{files}",
   "fm.to": "La:",
   "fm.upload_file": "Încarcă fișier în dosarul curent",
+  "fm.webdav.cancel": "Anulare",
   "fm.webdav.close": "Închidere",
   "fm.webdav.creds_format": "\n\nAcreditări (generate automat):\nUtilizator: %{user}\nParolă: %{pass}",
+  "fm.webdav.mount_body": "Conectați „%{name}” ca disc local? Rămâne în managerul de fișiere până îl deconectați.",
+  "fm.webdav.mount_btn": "Conectare",
+  "fm.webdav.mount_title": "Conectați discul?",
   "fm.webdav.running_desc": "Serverul WebDAV RULEAZĂ pe portul %{port}.\n\nUnitatea este montată. Faceți clic pe 'Oprește serverul' pentru a demonta și a opri serverul.",
   "fm.webdav.start_desc": "Porniți serverul WebDAV local pe portul %{port}?%{creds}\n\nVom monta unitatea în sistemul dvs.:",
   "fm.webdav.start_server": "Pornește serverul",
   "fm.webdav.stop_server": "Oprește serverul",
-  "fm.webdav.title": "WebDAV: %{name}"
+  "fm.webdav.title": "WebDAV: %{name}",
+  "fm.webdav.unmount_body": "Deconectați „%{name}”? Fișierele încă deschise de pe acest disc pot înceta să funcționeze.",
+  "fm.webdav.unmount_btn": "Deconectare",
+  "fm.webdav.unmount_title": "Deconectați discul?"
 }

@@ -1,3 +1,4 @@
+mod event_loop;
 mod fbuttons;
 pub(crate) mod header;
 mod keyboard;
@@ -6,6 +7,16 @@ mod panels;
 use adw::prelude::*;
 use gtk::glib;
 use gtk::{Box, Orientation};
+
+#[cfg(feature = "nodeinnet")]
+use client_core;
+#[cfg(not(feature = "nodeinnet"))]
+use crate::core::client_core;
+
+#[cfg(feature = "nodeinnet")]
+use web_davserver;
+#[cfg(not(feature = "nodeinnet"))]
+use crate::core::web_davserver;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(dead_code)]
@@ -21,6 +32,10 @@ impl MainWindow {
     pub fn create(
         app: &adw::Application,
         my_info: ic_model::DeviceInfo,
+        node_info: nodeinnet_p2p::NodeInfo,
+        net_tx: crate::core::NetCmdSender,
+        ui_tx: std::sync::mpsc::Sender<crate::core::UiEvent>,
+        ui_rx: std::sync::mpsc::Receiver<crate::core::UiEvent>,
         config: client_config::AppConfig,
         api_channel: Option<(
             tokio::sync::mpsc::Sender<crate::api::ApiCmd>,
@@ -31,6 +46,13 @@ impl MainWindow {
         )>,
         network_warning: Option<(String, u16)>,
     ) {
+        let online_nodes =
+            std::rc::Rc::new(std::cell::RefCell::new(Vec::<nodeinnet_p2p::NodeInfo>::new()));
+        let ws_state =
+            std::rc::Rc::new(std::cell::RefCell::new(client_core::WsState::Disconnected));
+        let active_dialog_graph = std::rc::Rc::new(std::cell::RefCell::new(
+            None::<crate::netgraph::NetGraph>,
+        ));
         let selector_updaters =
             std::rc::Rc::new(std::cell::RefCell::new(Vec::<std::rc::Rc<dyn Fn()>>::new()));
         let shift_held = std::rc::Rc::new(std::cell::Cell::new(false));
@@ -59,7 +81,7 @@ impl MainWindow {
             .title(&*crate::i18n::tr("main_window_title"))
             .default_width(width)
             .default_height(height)
-            .icon_name("com.icecommander.gtkapp")
+            .icon_name("com.nodeinnet.icecommander.gtkapp")
             .build();
 
         if is_max {
@@ -71,11 +93,18 @@ impl MainWindow {
 
         let header::HeaderResult {
             bar,
+            login_label,
             settings_btn,
             on_open_sysinfo,
+            on_open_account,
         } = header::build_header_bar(
             &window,
             &config,
+            &net_tx,
+            &node_info,
+            ws_state.clone(),
+            active_dialog_graph.clone(),
+            online_nodes.clone(),
             selector_updaters.clone(),
             global_on_connect.clone(),
         );
@@ -109,8 +138,11 @@ impl MainWindow {
             &window,
             &config,
             &my_info,
+            &net_tx,
+            online_nodes.clone(),
             shift_held.clone(),
             on_open_sysinfo.clone(),
+            on_open_account.clone(),
             selector_updaters.clone(),
             width,
             term_out_left,
@@ -170,7 +202,7 @@ impl MainWindow {
                         on_collapse_c();
                     }
                 });
-            crate::api::start_api_dispatcher(rx, left_info.clone(), right_info.clone(), config.clone(), selector_updaters.clone(), left_term_bridge, right_term_bridge, term_expand);
+            crate::api::start_api_dispatcher(rx, left_info.clone(), right_info.clone(), config.clone(), selector_updaters.clone(), online_nodes.clone(), net_tx.clone(), node_info.clone(), left_term_bridge, right_term_bridge, term_expand);
         }
 
         {
@@ -214,6 +246,12 @@ impl MainWindow {
         }
 
         {
+            let ws_state_s = ws_state.clone();
+            let active_dialog_graph_s = active_dialog_graph.clone();
+            let online_nodes_s = online_nodes.clone();
+            let my_info_s = node_info.clone();
+            let net_tx_s = net_tx.clone();
+            let login_lbl_s = login_label.clone();
             let selector_updaters_s = selector_updaters.clone();
             let window_s = window.clone();
             let left_router_s = left_router.clone();
@@ -241,6 +279,12 @@ impl MainWindow {
                 crate::settings::show_settings_dialog(
                     window_s.upcast_ref(),
                     config_s.clone(),
+                    &ws_state_s,
+                    &active_dialog_graph_s,
+                    &online_nodes_s,
+                    &my_info_s,
+                    &net_tx_s,
+                    &login_lbl_s,
                     on_connections_changed,
                 );
             });
@@ -496,14 +540,74 @@ impl MainWindow {
 
                 config_close.save();
 
+                web_davserver::unmount_all();
+
                 glib::Propagation::Proceed
             });
         }
 
+        let refresh_token = config.get::<String>("app.refresh_token");
+        if let Some(token) = refresh_token {
+            if !token.is_empty() {
+                let net_tx_login = net_tx.clone();
+                let my_info_login = node_info.clone();
+                let login_lbl_login = login_label.clone();
+                let config_login = config.clone();
+
+                glib::spawn_future_local(async move {
+                    login_lbl_login.set_text("Connecting...");
+                    let api_base = nodeinnet_p2p::api_base();
+                    if let Ok(resp) = client_core::auth::refresh_access_token(
+                        &api_base,
+                        &token,
+                        turn_region(&config_login),
+                    )
+                    .await
+                    {
+                        config_login.set("app.premium", resp.premium != 0);
+                        config_login.save();
+                        let url = format!(
+                            "{}?token={}&session_id={}",
+                            resp.ws_url, resp.access_token, my_info_login.id
+                        );
+                        let mut my_info_login = my_info_login;
+                        my_info_login.resources = crate::shares::build_all_resources(
+                            &config_login,
+                            &my_info_login.id,
+                        );
+                        let _ = net_tx_login
+                            .send(client_core::NetCmd::Connect(url, my_info_login, resp.turn))
+                            .await;
+                    } else {
+                        login_lbl_login.set_text("Disconnected");
+                    }
+                });
+            }
+        }
+
         let wiz_config = config.clone();
+        let wiz_ws_state = ws_state.clone();
+        let wiz_graph = active_dialog_graph.clone();
+        let wiz_online = online_nodes.clone();
+        let wiz_node_info = node_info.clone();
+        let wiz_net_tx = net_tx.clone();
+        let wiz_login_lbl = login_label.clone();
         let wiz_left_router = left_router.clone();
         let wiz_right_router = right_router.clone();
         let wiz_updaters = selector_updaters.clone();
+
+        event_loop::start_event_loop(
+            ui_rx,
+            online_nodes,
+            selector_updaters,
+            left_router.clone(),
+            right_router.clone(),
+            login_label,
+            ws_state,
+            active_dialog_graph,
+            node_info,
+            config,
+        );
 
         window.present();
 
@@ -537,6 +641,12 @@ impl MainWindow {
             crate::wizard::show_setup_wizard(
                 window.upcast_ref(),
                 wiz_config.clone(),
+                &wiz_ws_state,
+                &wiz_graph,
+                &wiz_online,
+                &wiz_node_info,
+                &wiz_net_tx,
+                &wiz_login_lbl,
                 on_changed,
             );
         }
@@ -557,5 +667,17 @@ impl MainWindow {
         if !std::env::args().any(|a| a == "--no-check-update") {
             crate::updater::auto_check(window.upcast::<gtk::Window>());
         }
+    }
+}
+
+fn turn_region(config: &client_config::AppConfig) -> nodeinnet_p2p::TurnRegion {
+    #[cfg(feature = "nodeinnet")]
+    {
+        config.turn_region()
+    }
+    #[cfg(not(feature = "nodeinnet"))]
+    {
+        let _ = config;
+        Default::default()
     }
 }

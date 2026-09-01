@@ -17,11 +17,11 @@ cargo build -p webserver-app --release
 # Disable LTO, debug packages, and stripping from makepkg to preserve exact binary MD5
 echo "OPTIONS+=(!strip !lto !debug)" > ~/.makepkg.conf
 
-mkdir -p /tmp/ice-commander-webserver-arch-build
+mkdir -p /tmp/nodeinnet-ice-commander-webserver-arch-build
 
 # No gtk/adwaita/alsa — a single GTK-free web-server binary.
-cat <<EOF > /tmp/ice-commander-webserver-arch-build/PKGBUILD
-pkgname=ice-commander-webserver
+cat <<EOF > /tmp/nodeinnet-ice-commander-webserver-arch-build/PKGBUILD
+pkgname=nodeinnet-ice-commander-webserver
 pkgver=$VERSION
 pkgrel=1
 pkgdesc="Ice Commander — headless web-server (dual-pane file manager, browser is the client)"
@@ -33,14 +33,14 @@ source=()
 sha256sums=()
 
 package() {
-    install -Dm755 "/home/builder/workdir/bin/distr/zst/target/release/ice-webserver" "\$pkgdir/usr/bin/ice-webserver"
+    install -Dm755 "/home/builder/workdir/bin/distr/zst/target/release/nodeinnet-ice-webserver" "\$pkgdir/usr/bin/nodeinnet-ice-webserver"
 }
 EOF
 
-cd /tmp/ice-commander-webserver-arch-build
+cd /tmp/nodeinnet-ice-commander-webserver-arch-build
 PKGDEST="/home/builder/workdir/distr/" CARGO_TARGET_DIR="/home/builder/workdir/bin/distr/zst/target" makepkg -cf
 cd /home/builder/workdir
 
 
-FILE=$(ls -t distr/ice-commander-webserver*.pkg.tar.zst | head -n 1)
+FILE=$(ls -t distr/nodeinnet-ice-commander-webserver*.pkg.tar.zst | head -n 1)
 echo "Installer Arch Linux webserver md5: $(md5sum "$FILE" | awk '{print $1}')" >> distr/md5sums.txt

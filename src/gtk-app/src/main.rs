@@ -8,6 +8,10 @@ mod api;
 mod app;
 
 pub use common::AppError;
+mod account;
+mod core;
+mod netgraph;
+mod shares;
 mod connection_manager;
 mod device_name;
 mod drives;
@@ -79,7 +83,7 @@ async fn main() -> glib::ExitCode {
     app::Application::init_resources();
 
     let application = adw::Application::builder()
-        .application_id("com.icecommander.gtkapp")
+        .application_id("com.nodeinnet.icecommander.gtkapp")
         .build();
 
     let config_clone = config.clone();

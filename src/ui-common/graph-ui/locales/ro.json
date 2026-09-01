@@ -1,0 +1,13 @@
+{
+  "graph.apply_btn": "Aplică",
+  "graph.device_name_label": "Nume dispozitiv:",
+  "graph.device_name_placeholder": "Nume dispozitiv",
+  "graph.logged_in_as": "Autentificat ca: %{user}",
+  "graph.this_android": "Acest dispozitiv Android",
+  "graph.this_device": "Acest dispozitiv",
+  "graph.this_ios": "Acest iPhone/iPad",
+  "graph.this_linux": "Acest PC Linux",
+  "graph.this_macos": "Acest Apple Mac",
+  "graph.this_windows": "Acest PC Windows",
+  "graph.welcome": "Bine ați venit la %{title}!"
+}

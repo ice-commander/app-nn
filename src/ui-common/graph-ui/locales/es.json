@@ -1,0 +1,13 @@
+{
+  "graph.apply_btn": "Aplicar",
+  "graph.device_name_label": "Nombre del dispositivo:",
+  "graph.device_name_placeholder": "Nombre del dispositivo",
+  "graph.logged_in_as": "Sesión iniciada como: %{user}",
+  "graph.this_android": "Este dispositivo Android",
+  "graph.this_device": "Este dispositivo",
+  "graph.this_ios": "Este iPhone/iPad",
+  "graph.this_linux": "Este PC con Linux",
+  "graph.this_macos": "Este Apple Mac",
+  "graph.this_windows": "Este PC con Windows",
+  "graph.welcome": "¡Bienvenido a %{title}!"
+}

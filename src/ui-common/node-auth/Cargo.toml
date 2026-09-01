@@ -1,0 +1,29 @@
+[package]
+name = "node-auth"
+version = "0.1.286"
+edition = "2021"
+description = "NodeInNet Authentication UI & Logic"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+gtk = { package = "gtk4", version = "0.9", features = ["v4_12"] }
+adw = { package = "libadwaita", version = "0.7", features = ["v1_6"] }
+relm4 = { workspace = true }
+common = { workspace = true }
+nodeinnet-p2p = { workspace = true }
+client-config = { workspace = true }
+hostname = "0.4"
+nodeinnet-i18n = { workspace = true }
+
+# Screen-capture dependency banner only: the pkexec installers run inside a
+# private tokio Runtime on a worker std::thread — no runtime elsewhere.
+node-functions = { workspace = true, optional = true }
+tokio = { version = "1.36", features = ["rt-multi-thread"], optional = true }
+
+[features]
+default = ["screen-capture"]
+screen-capture = ["dep:node-functions", "node-functions/screen-capture", "dep:tokio"]
+
+[build-dependencies]
+glib-build-tools = "0.20"

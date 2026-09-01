@@ -85,6 +85,7 @@
   "fm.rename_selected": "Renombrar seleccionado",
   "fm.rename_title": "Renombrar elemento",
   "fm.root_tooltip": "Raíz",
+  "fm.select_file_upload": "Seleccionar archivo para subir",
   "fm.select_mask_placeholder": "Seleccionar por máscara, p. ej. *.txt",
   "fm.select_other_source": "Seleccionar otra fuente",
   "fm.small_icons": "Iconos pequeños",
@@ -98,11 +99,18 @@
   "fm.status.selected_multiple": "Seleccionado: %{folders} carpetas, %{files} archivos",
   "fm.to": "Destino:",
   "fm.upload_file": "Subir archivo a la carpeta actual",
+  "fm.webdav.cancel": "Cancelar",
   "fm.webdav.close": "Cerrar",
   "fm.webdav.creds_format": "\n\nCredenciales (generadas automáticamente):\nUsuario: %{user}\nContraseña: %{pass}",
+  "fm.webdav.mount_body": "¿Conectar «%{name}» como unidad local? Aparecerá en el gestor de archivos hasta que la desconectes.",
+  "fm.webdav.mount_btn": "Conectar",
+  "fm.webdav.mount_title": "¿Conectar la unidad?",
   "fm.webdav.running_desc": "El servidor WebDAV está FUNCIONANDO en el puerto %{port}.\n\nLa unidad está montada. Haga clic en 'Detener servidor' para desmontarla y detener el servidor.",
   "fm.webdav.start_desc": "¿Iniciar servidor WebDAV local en el puerto %{port}?%{creds}\n\nMontaremos la unidad en su sistema:",
   "fm.webdav.start_server": "Iniciar servidor",
   "fm.webdav.stop_server": "Detener servidor",
-  "fm.webdav.title": "WebDAV: %{name}"
+  "fm.webdav.title": "WebDAV: %{name}",
+  "fm.webdav.unmount_body": "¿Desconectar «%{name}»? Los archivos abiertos desde esta unidad pueden dejar de funcionar.",
+  "fm.webdav.unmount_btn": "Desconectar",
+  "fm.webdav.unmount_title": "¿Desconectar la unidad?"
 }

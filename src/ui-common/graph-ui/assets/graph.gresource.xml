@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/com/graph-ui/gtk">
+    <file compressed="true" preprocess="xml-stripblanks">logo.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">os-android.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">os-console.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">os-iphone.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">os-linux.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">os-mac.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">os-win.svg</file>
+  </gresource>
+</gresources>

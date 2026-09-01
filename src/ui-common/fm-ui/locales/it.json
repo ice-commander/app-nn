@@ -85,6 +85,7 @@
   "fm.rename_selected": "Rinomina selezionato",
   "fm.rename_title": "Rinomina elemento",
   "fm.root_tooltip": "Root",
+  "fm.select_file_upload": "Seleziona file da caricare",
   "fm.select_mask_placeholder": "Seleziona per maschera, es. *.txt",
   "fm.select_other_source": "Seleziona altra origine",
   "fm.small_icons": "Icone piccole",
@@ -98,11 +99,18 @@
   "fm.status.selected_multiple": "Selezionati: %{folders} cartelle, %{files} file",
   "fm.to": "A:",
   "fm.upload_file": "Carica file nella cartella corrente",
+  "fm.webdav.cancel": "Annulla",
   "fm.webdav.close": "Chiudi",
   "fm.webdav.creds_format": "\n\nCredenziali (generate automaticamente):\nUtente: %{user}\nPassword: %{pass}",
+  "fm.webdav.mount_body": "Collegare «%{name}» come disco locale? Resterà nel gestore file finché non lo scolleghi.",
+  "fm.webdav.mount_btn": "Collega",
+  "fm.webdav.mount_title": "Collegare il disco?",
   "fm.webdav.running_desc": "Il server WebDAV è ATTIVO sulla porta %{port}.\n\nL'unità è montata. Clicca su 'Arresta server' per smontare e arrestare il server.",
   "fm.webdav.start_desc": "Avviare il server WebDAV locale sulla porta %{port}?%{creds}\n\nL'unità verrà montata sul tuo sistema:",
   "fm.webdav.start_server": "Avvia server",
   "fm.webdav.stop_server": "Arresta server",
-  "fm.webdav.title": "WebDAV: %{name}"
+  "fm.webdav.title": "WebDAV: %{name}",
+  "fm.webdav.unmount_body": "Scollegare «%{name}»? I file ancora aperti da questo disco potrebbero smettere di funzionare.",
+  "fm.webdav.unmount_btn": "Scollega",
+  "fm.webdav.unmount_title": "Scollegare il disco?"
 }

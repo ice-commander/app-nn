@@ -10,8 +10,9 @@ license = "MIT OR Apache-2.0"
 # The real console build: a terminal TUI (ratatui) over the same GTK-free `panel-core` the
 # GTK app and the web-server use. Two `RouterState` cores drive two panels; keypresses call
 # the core's navigation/file ops directly — no HTTP, no `panel-server`, no `ApiCmd`. v1 =
+# file manager + drives + connections + terminal. See specs/headless_panel_core.md (Phase B).
 [[bin]]
-name = "ice-console"
+name = "nodeinnet-ice-console"
 path = "src/main.rs"
 
 [dependencies]
@@ -38,18 +39,18 @@ dirs = "6.0.0"
 # vendored-openssl, so no runtime ssl dep either). The distro scripts copy the release
 # binary to bin/console-app/release/ before packaging.
 [package.metadata.deb]
-name = "ice-commander-console"
+name = "nodeinnet-ice-commander-console"
 maintainer = "Ice Commander Team <support@icecommander.com>"
 copyright = "2026, Ice Commander Team"
 depends = "$auto"
 section = "utils"
 priority = "optional"
 assets = [
-    ["../../bin/console-app/release/ice-console", "/usr/bin/ice-console", "755"],
+    ["../../bin/console-app/release/nodeinnet-ice-console", "/usr/bin/nodeinnet-ice-console", "755"],
 ]
 
 [package.metadata.generate-rpm]
-name = "ice-commander-console"
+name = "nodeinnet-ice-commander-console"
 assets = [
-    { source = "../../bin/console-app/release/ice-console", dest = "/usr/bin/ice-console", mode = "755" },
+    { source = "../../bin/console-app/release/nodeinnet-ice-console", dest = "/usr/bin/nodeinnet-ice-console", mode = "755" },
 ]

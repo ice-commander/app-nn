@@ -14,12 +14,12 @@ export CARGO_TARGET_DIR="/home/builder/workdir/bin/distr/deb/target"
 export CARGO_HOME="/home/builder/workdir/bin/distr/cargo-home-shared"
 node ./builder/gen-version.js gui deb
 
-cargo build -p ice-commander-gtk --release
+cargo build -p nodeinnet-ice-commander-gtk --release
 
 mkdir -p ./bin/gtk-app/release/
-cp $CARGO_TARGET_DIR/release/ice-commander ./bin/gtk-app/release/ice-commander
+cp $CARGO_TARGET_DIR/release/nodeinnet-ice-commander ./bin/gtk-app/release/nodeinnet-ice-commander
 
-cargo deb -p ice-commander-gtk
+cargo deb -p nodeinnet-ice-commander-gtk
 
 cp $CARGO_TARGET_DIR/debian/*.deb ./distr
 

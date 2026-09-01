@@ -70,7 +70,7 @@ uses as workspace members, so an unused view costs it nothing.
 
 This repository has no workspace manifest of its own: the consuming project
 defines the workspace. Clone it directly to work on it, or work inside a
-project that already includes it.
+project that already includes it as a submodule.
 
 ```sh
 git clone https://github.com/ice-commander/ui-common.git

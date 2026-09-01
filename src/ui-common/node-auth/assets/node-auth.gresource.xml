@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/com/node-auth/gtk">
+    <file compressed="true" preprocess="xml-stripblanks">login.svg</file>
+  </gresource>
+</gresources>

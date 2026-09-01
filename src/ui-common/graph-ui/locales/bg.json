@@ -1,0 +1,13 @@
+{
+  "graph.apply_btn": "Прилагане",
+  "graph.device_name_label": "Име на устройството:",
+  "graph.device_name_placeholder": "Име на устройството",
+  "graph.logged_in_as": "Влязъл като: %{user}",
+  "graph.this_android": "Това Android устройство",
+  "graph.this_device": "Това устройство",
+  "graph.this_ios": "Този iPhone/iPad",
+  "graph.this_linux": "Този Linux компютър",
+  "graph.this_macos": "Този Apple Mac",
+  "graph.this_windows": "Този Windows компютър",
+  "graph.welcome": "Добре дошли в %{title}!"
+}

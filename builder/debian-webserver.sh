@@ -18,14 +18,14 @@ node ./builder/gen-version.js webserver deb
 cargo build -p webserver-app --release
 
 mkdir -p ./bin/webserver-app/release/
-cp $CARGO_TARGET_DIR/release/ice-webserver ./bin/webserver-app/release/ice-webserver
+cp $CARGO_TARGET_DIR/release/nodeinnet-ice-webserver ./bin/webserver-app/release/nodeinnet-ice-webserver
 
 cargo deb -p webserver-app --no-build
 
-cp $CARGO_TARGET_DIR/debian/ice-commander-webserver*.deb ./distr
+cp $CARGO_TARGET_DIR/debian/nodeinnet-ice-commander-webserver*.deb ./distr
 
 
-FILE=$(ls -t distr/ice-commander-webserver*.deb | head -n 1)
+FILE=$(ls -t distr/nodeinnet-ice-commander-webserver*.deb | head -n 1)
 echo "Installer Debian webserver md5: $(md5sum "$FILE" | awk '{print $1}')" >> distr/md5sums.txt
 
 exit 0

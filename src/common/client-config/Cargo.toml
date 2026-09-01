@@ -9,3 +9,7 @@ publish = false
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 dirs = "5.0"
+nodeinnet-p2p = { workspace = true, optional = true }
+
+[features]
+nodeinnet = ["dep:nodeinnet-p2p"]

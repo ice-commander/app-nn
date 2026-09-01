@@ -10,7 +10,7 @@ echo "Node.js version: $(node --version)"
 
 # 1. Clean previous build outputs
 node ./builder/gen-version.js gui dmg
-rm -f ./bin/gtk-app/release/ice-commander
+rm -f ./bin/gtk-app/release/nodeinnet-ice-commander
 rm -rf ./bin/distr/dmg_stage
 rm -f ./bin/distr/gtkapp-darwin/*.dmg
 
@@ -24,7 +24,7 @@ cd ./src/gtk-app
 CARGO_TARGET_DIR=../../bin/distr/gtkapp-darwin cargo bundle --release
 cd ../..
 
-APP_BUNDLE="./bin/distr/gtkapp-darwin/release/bundle/osx/IceCommander.app"
+APP_BUNDLE="./bin/distr/gtkapp-darwin/release/bundle/osx/NodeInNet IceCommander.app"
 BREW_PREFIX=$(brew --prefix)
 
 # 3. Copy and compile GLib schemas
@@ -40,7 +40,7 @@ dylibbundler -s /Library/Developer/CommandLineTools/usr/lib/swift-5.0/macosx \
              -s "$(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/macosx" \
              -s "$(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.5/macosx" \
              -s "$BREW_PREFIX/lib" \
-             -od -b -x "$APP_BUNDLE/Contents/MacOS/ice-commander" \
+             -od -b -x "$APP_BUNDLE/Contents/MacOS/nodeinnet-ice-commander" \
              -d "$APP_BUNDLE/Contents/Libs/" \
              -p @executable_path/../Libs/
 
@@ -63,8 +63,8 @@ echo "=== Packaging DMG Installer ==="
 mkdir -p ./bin/distr/dmg_stage
 cp -r "$APP_BUNDLE" ./bin/distr/dmg_stage/
 
-DMG_OUTPUT="./bin/distr/gtkapp-darwin/IceCommander.dmg"
-create-dmg --volname "Ice Commander Installer" \
+DMG_OUTPUT="./bin/distr/gtkapp-darwin/NodeInNetIceCommander.dmg"
+create-dmg --volname "NodeInNet Ice Commander Installer" \
            --window-pos 200 120 \
            --window-size 800 400 \
            --icon-size 100 \
@@ -74,7 +74,7 @@ create-dmg --volname "Ice Commander Installer" \
 
 rm -rf ./bin/distr/dmg_stage
 
-DMG_NAME="ice-commander-${VERSION}-1-mac.dmg"
+DMG_NAME="nodeinnet-ice-commander-${VERSION}-1-mac.dmg"
 mv "$DMG_OUTPUT" ./distr/$DMG_NAME
 
 

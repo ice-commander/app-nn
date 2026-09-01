@@ -13,6 +13,23 @@ pub mod sftp_rpc;
 pub mod utils;
 pub mod webdav_rpc;
 
+#[cfg(feature = "nodeinnet")]
+pub mod p2p_rpc;
+
+#[cfg(feature = "nodeinnet")]
+pub(crate) fn mode_of(meta: &std::fs::Metadata) -> Option<u32> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        Some(meta.mode())
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = meta;
+        None
+    }
+}
+
 pub fn set_connect_timeout_secs(secs: u64) {
     common::set_connect_timeout_secs(secs);
 }

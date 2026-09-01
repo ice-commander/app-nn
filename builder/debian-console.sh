@@ -18,14 +18,14 @@ node ./builder/gen-version.js console deb
 cargo build -p console-app --release
 
 mkdir -p ./bin/console-app/release/
-cp $CARGO_TARGET_DIR/release/ice-console ./bin/console-app/release/ice-console
+cp $CARGO_TARGET_DIR/release/nodeinnet-ice-console ./bin/console-app/release/nodeinnet-ice-console
 
 cargo deb -p console-app --no-build
 
-cp $CARGO_TARGET_DIR/debian/ice-commander-console*.deb ./distr
+cp $CARGO_TARGET_DIR/debian/nodeinnet-ice-commander-console*.deb ./distr
 
 
-FILE=$(ls -t distr/ice-commander-console*.deb | head -n 1)
+FILE=$(ls -t distr/nodeinnet-ice-commander-console*.deb | head -n 1)
 echo "Installer Debian console md5: $(md5sum "$FILE" | awk '{print $1}')" >> distr/md5sums.txt
 
 exit 0

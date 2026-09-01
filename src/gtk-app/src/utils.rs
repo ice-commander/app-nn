@@ -1,3 +1,5 @@
+use gtk::prelude::*;
+
 pub fn restart_app() {
     ic_utils::app::restart_app();
 }
@@ -20,4 +22,41 @@ pub fn open_with_system(path: &std::path::Path) {
         .args(["/c", "start", ""])
         .arg(path)
         .spawn();
+}
+
+pub fn select_folder<F>(parent_win: &gtk::Window, title: &str, callback: F)
+where
+    F: Fn(std::path::PathBuf) + 'static,
+{
+    #[cfg(target_os = "windows")]
+    {
+        let title = title.to_string();
+        let (tx, mut rx) = tokio::sync::mpsc::channel::<std::path::PathBuf>(1);
+
+        gtk::glib::spawn_future_local(async move {
+            if let Some(path) = rx.recv().await {
+                callback(path);
+            }
+        });
+
+        std::thread::spawn(move || {
+            let res = rfd::FileDialog::new().set_title(&title).pick_folder();
+            if let Some(path) = res {
+                let _ = tx.blocking_send(path);
+            }
+        });
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let dialog = gtk::FileDialog::builder().title(title).build();
+        let dialog_clone = dialog.clone();
+        dialog.select_folder(Some(parent_win), gtk::gio::Cancellable::NONE, move |res| {
+            let _keep_alive = dialog_clone;
+            if let Ok(file) = res {
+                if let Some(path) = file.path() {
+                    callback(path);
+                }
+            }
+        });
+    }
 }

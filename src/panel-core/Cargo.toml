@@ -9,6 +9,7 @@ publish = false
 # (navigation, history, selection memory) and the path helpers. Holds providers as
 # `fm_core::FileSystemRpc` objects only — no widgets — so it builds without GTK and is
 # the core a headless (console/web-server) backend drives, the same one the GTK app's
+# `panel-router` adapts. See specs/headless_panel_core.md.
 [dependencies]
 common = { workspace = true }
 fm-core = { workspace = true }

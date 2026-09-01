@@ -46,8 +46,12 @@ license.
 
 ## Getting the source
 
+The build needs the submodules:
+
 ```sh
-git clone https://github.com/ice-commander/app.git
+git clone --recursive https://github.com/ice-commander/app-nn.git
+# already cloned?
+git submodule update --init --recursive
 ```
 
 ## Building

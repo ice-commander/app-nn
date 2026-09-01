@@ -85,6 +85,7 @@
   "fm.rename_selected": "Преименуј изабрано",
   "fm.rename_title": "Преименуј ставку",
   "fm.root_tooltip": "Корен",
+  "fm.select_file_upload": "Изаберите датотеку за отпремање",
   "fm.select_mask_placeholder": "Izaberite po masci, npr. *.txt",
   "fm.select_other_source": "Izaberi drugi izvor",
   "fm.small_icons": "Мале иконе",
@@ -98,11 +99,18 @@
   "fm.status.selected_multiple": "Изабрано: %{folders}, %{files}",
   "fm.to": "У:",
   "fm.upload_file": "Отпреми датотеку у тренутну фасциклу",
+  "fm.webdav.cancel": "Откажи",
   "fm.webdav.close": "Затвори",
   "fm.webdav.creds_format": "\n\nАкредитиви (аутоматски генерисани):\nКорисник: %{user}\nЛозинка: %{pass}",
+  "fm.webdav.mount_body": "Повезати „%{name}“ као локални диск? Остаће у управнику датотека док га не искључите.",
+  "fm.webdav.mount_btn": "Повежи",
+  "fm.webdav.mount_title": "Повезати диск?",
   "fm.webdav.running_desc": "WebDAV сервер РАДИ на порту %{port}.\n\nДиск је монтиран. Кликните на 'Заустави сервер' да бисте демонтирали и зауставили сервер.",
   "fm.webdav.start_desc": "Покренути локални WebDAV сервер на порту %{port}?%{creds}\n\nМонтираћемо диск на ваш систем:",
   "fm.webdav.start_server": "Покрени сервер",
   "fm.webdav.stop_server": "Заустави сервер",
-  "fm.webdav.title": "WebDAV: %{name}"
+  "fm.webdav.title": "WebDAV: %{name}",
+  "fm.webdav.unmount_body": "Искључити „%{name}“? Датотеке још отворене са овог диска могу престати да раде.",
+  "fm.webdav.unmount_btn": "Искључи",
+  "fm.webdav.unmount_title": "Искључити диск?"
 }

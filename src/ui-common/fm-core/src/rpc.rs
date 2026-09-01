@@ -141,6 +141,16 @@ pub trait FileSystemRpc {
     ) {
     }
 
+    #[cfg(feature = "nodeinnet")]
+    fn can_mount(&self) -> bool {
+        false
+    }
+
+    #[cfg(feature = "nodeinnet")]
+    fn mount_bridge(&self) -> Option<tokio::sync::mpsc::Sender<nodeinnet_p2p::P2pMessage>> {
+        None
+    }
+
     fn is_local(&self) -> bool {
         false
     }

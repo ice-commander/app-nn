@@ -9,3 +9,8 @@ publish = false
 common = { workspace = true }
 async-trait = "0.1"
 uuid = { version = "1.7", features = ["v4", "fast-rng"] }
+nodeinnet-p2p = { workspace = true, optional = true }
+tokio = { workspace = true, optional = true }
+
+[features]
+nodeinnet = ["dep:nodeinnet-p2p", "dep:tokio"]

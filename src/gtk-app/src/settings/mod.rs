@@ -7,6 +7,11 @@ use gtk::{
 use std::cell::RefCell;
 use std::rc::Rc;
 
+#[cfg(feature = "nodeinnet")]
+use client_core;
+#[cfg(not(feature = "nodeinnet"))]
+use crate::core::client_core;
+
 mod page_about;
 mod page_applications;
 mod page_connections;
@@ -14,11 +19,21 @@ mod page_editors;
 mod page_hotkeys;
 mod page_interface;
 mod page_logging;
+#[cfg(feature = "nodeinnet")]
+mod page_nodeinnet;
 mod page_security;
+#[cfg(feature = "nodeinnet")]
+mod page_transfer;
 
 pub fn show_settings_dialog(
     parent_window: &gtk::Window,
     config: client_config::AppConfig,
+    ws_state: &Rc<RefCell<client_core::WsState>>,
+    active_dialog_graph: &Rc<RefCell<Option<crate::netgraph::NetGraph>>>,
+    online_nodes: &Rc<RefCell<Vec<nodeinnet_p2p::NodeInfo>>>,
+    my_info: &nodeinnet_p2p::NodeInfo,
+    net_tx: &crate::core::NetCmdSender,
+    login_btn_label: &gtk::Label,
     on_connections_changed: Rc<dyn Fn() + 'static>,
 ) {
     let settings_dialog = gtk::Window::builder()
@@ -100,6 +115,16 @@ pub fn show_settings_dialog(
     categories.push((
         "Applications",
         crate::i18n::tr("settings.cat_applications"),
+    ));
+    #[cfg(feature = "nodeinnet")]
+    categories.push((
+        "Node.In.Net",
+        crate::i18n::tr("settings.cat_nodeinnet"),
+    ));
+    #[cfg(feature = "nodeinnet")]
+    categories.push((
+        "Transfer",
+        crate::i18n::tr("settings.cat_transfer"),
     ));
     categories.push((
         "Security",
@@ -186,6 +211,39 @@ pub fn show_settings_dialog(
                 let config = config.clone();
                 Some(std::boxed::Box::new(move |page_box: &Box| {
                     page_applications::build(page_box, &dialog, config.clone());
+                }))
+            }
+            #[cfg(feature = "nodeinnet")]
+            "Node.In.Net" => {
+                let dialog = settings_dialog.clone();
+                let config = config.clone();
+                let ws_state = ws_state.clone();
+                let graph = active_dialog_graph.clone();
+                let nodes = online_nodes.clone();
+                let my_info = my_info.clone();
+                let net_tx = net_tx.clone();
+                let login_lbl = login_btn_label.clone();
+                let on_changed = on_connections_changed.clone();
+                Some(std::boxed::Box::new(move |page_box: &Box| {
+                    page_nodeinnet::build(
+                        page_box,
+                        dialog.upcast_ref(),
+                        config.clone(),
+                        &ws_state,
+                        &graph,
+                        &nodes,
+                        &my_info,
+                        &net_tx,
+                        &login_lbl,
+                        on_changed.clone(),
+                    );
+                }))
+            }
+            #[cfg(feature = "nodeinnet")]
+            "Transfer" => {
+                let config = config.clone();
+                Some(std::boxed::Box::new(move |page_box: &Box| {
+                    page_transfer::build(page_box, config.clone());
                 }))
             }
             "Security" => {

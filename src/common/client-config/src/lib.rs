@@ -252,3 +252,43 @@ mod tests {
         let _ = fs::remove_dir_all(legacy.parent().unwrap());
     }
 }
+
+#[cfg(feature = "nodeinnet")]
+impl AppConfig {
+    pub fn turn_region(&self) -> nodeinnet_p2p::TurnRegion {
+        self.get_or_default("turn_region")
+    }
+
+    pub fn set_turn_region(&self, region: nodeinnet_p2p::TurnRegion) {
+        self.set("turn_region", region);
+        self.save();
+    }
+}
+
+#[cfg(feature = "nodeinnet")]
+pub struct ConfigPeerStore(AppConfig);
+
+#[cfg(feature = "nodeinnet")]
+impl ConfigPeerStore {
+    pub fn new(config: AppConfig) -> Self {
+        Self(config)
+    }
+}
+
+#[cfg(feature = "nodeinnet")]
+impl nodeinnet_p2p::PeerStore for ConfigPeerStore {
+    fn load(&self) -> std::collections::HashMap<String, nodeinnet_p2p::PeerConfig> {
+        self.0.get_or_default("peers")
+    }
+
+    fn update(
+        &self,
+        f: &mut dyn FnMut(&mut std::collections::HashMap<String, nodeinnet_p2p::PeerConfig>),
+    ) {
+        self.0.update(
+            "peers",
+            |peers: &mut std::collections::HashMap<String, nodeinnet_p2p::PeerConfig>| f(peers),
+        );
+        self.0.save();
+    }
+}

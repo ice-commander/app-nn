@@ -85,6 +85,7 @@
   "fm.rename_selected": "Renommer la sélection",
   "fm.rename_title": "Renommer l'élément",
   "fm.root_tooltip": "Racine",
+  "fm.select_file_upload": "Sélectionner le fichier à télécharger",
   "fm.select_mask_placeholder": "Sélectionner par masque, ex. *.txt",
   "fm.select_other_source": "Sélectionner une autre source",
   "fm.small_icons": "Petites icônes",
@@ -98,11 +99,18 @@
   "fm.status.selected_multiple": "Sélectionné : %{folders} dossiers, %{files} fichiers",
   "fm.to": "Vers :",
   "fm.upload_file": "Télécharger un fichier vers le dossier actuel",
+  "fm.webdav.cancel": "Annuler",
   "fm.webdav.close": "Fermer",
   "fm.webdav.creds_format": "\n\nIdentifiants (générés automatiquement) :\nUtilisateur : %{user}\nMot de passe : %{pass}",
+  "fm.webdav.mount_body": "Connecter « %{name} » comme disque local ? Il restera dans le gestionnaire de fichiers jusqu'à la déconnexion.",
+  "fm.webdav.mount_btn": "Connecter",
+  "fm.webdav.mount_title": "Connecter le disque ?",
   "fm.webdav.running_desc": "Le serveur WebDAV fonctionne sur le port %{port}.\n\nLe lecteur est monté. Cliquez sur 'Arrêter le serveur' pour le démonter et arrêter le serveur.",
   "fm.webdav.start_desc": "Démarrer le serveur WebDAV local sur le port %{port} ?%{creds}\n\nNous allons monter le lecteur sur votre système :",
   "fm.webdav.start_server": "Démarrer le serveur",
   "fm.webdav.stop_server": "Arrêter le serveur",
-  "fm.webdav.title": "WebDAV : %{name}"
+  "fm.webdav.title": "WebDAV : %{name}",
+  "fm.webdav.unmount_body": "Déconnecter « %{name} » ? Les fichiers encore ouverts depuis ce disque peuvent cesser de fonctionner.",
+  "fm.webdav.unmount_btn": "Déconnecter",
+  "fm.webdav.unmount_title": "Déconnecter le disque ?"
 }

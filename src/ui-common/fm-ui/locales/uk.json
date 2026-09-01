@@ -85,6 +85,7 @@
   "fm.rename_selected": "Перейменувати вибране",
   "fm.rename_title": "Перейменувати елемент",
   "fm.root_tooltip": "Корінь",
+  "fm.select_file_upload": "Виберіть файл для завантаження",
   "fm.select_mask_placeholder": "Виділення за маскою, напр. *.txt",
   "fm.select_other_source": "Вибрати інше джерело",
   "fm.small_icons": "Дрібні значки",
@@ -98,11 +99,18 @@
   "fm.status.selected_multiple": "Вибрано: папок: %{folders}, файлів: %{files}",
   "fm.to": "Куди:",
   "fm.upload_file": "Завантажити файл у поточну папку",
+  "fm.webdav.cancel": "Скасувати",
   "fm.webdav.close": "Закрити",
   "fm.webdav.creds_format": "\n\nОблікові дані (автогенеровані):\nКористувач: %{user}\nПароль: %{pass}",
+  "fm.webdav.mount_body": "Підключити «%{name}» як локальний диск? Він буде видимий у файловому менеджері, доки ви його не відключите.",
+  "fm.webdav.mount_btn": "Підключити",
+  "fm.webdav.mount_title": "Підключити диск?",
   "fm.webdav.running_desc": "Сервер WebDAV ЗАПУЩЕНИЙ на порту %{port}.\n\nДиск змонтовано. Натисніть 'Зупинити сервер', щоб розмонтувати та зупинити його.",
   "fm.webdav.start_desc": "Запустити локальний сервер WebDAV на порту %{port}?%{creds}\n\nМи змонтуємо диск у вашій системі:",
   "fm.webdav.start_server": "Запустити сервер",
   "fm.webdav.stop_server": "Зупинити сервер",
-  "fm.webdav.title": "WebDAV: %{name}"
+  "fm.webdav.title": "WebDAV: %{name}",
+  "fm.webdav.unmount_body": "Відключити «%{name}»? Відкриті з цього диска файли можуть перестати працювати.",
+  "fm.webdav.unmount_btn": "Відключити",
+  "fm.webdav.unmount_title": "Відключити диск?"
 }

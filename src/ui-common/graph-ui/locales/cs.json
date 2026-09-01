@@ -1,0 +1,13 @@
+{
+  "graph.apply_btn": "Použít",
+  "graph.device_name_label": "Název zařízení:",
+  "graph.device_name_placeholder": "Název zařízení",
+  "graph.logged_in_as": "Přihlášen jako: %{user}",
+  "graph.this_android": "Toto zařízení Android",
+  "graph.this_device": "Toto zařízení",
+  "graph.this_ios": "Tento iPhone/iPad",
+  "graph.this_linux": "Tento počítač Linux",
+  "graph.this_macos": "Tento Apple Mac",
+  "graph.this_windows": "Tento počítač Windows",
+  "graph.welcome": "Vítejte v %{title}!"
+}

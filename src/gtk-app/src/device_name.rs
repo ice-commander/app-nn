@@ -20,3 +20,14 @@ pub fn default_name() -> String {
         .filter(|s| !s.is_empty())
         .unwrap_or_else(|| "IceCommander Client".to_string())
 }
+
+pub fn set(config: &AppConfig, name: &str) {
+    let trimmed = name.trim();
+    let value = if trimmed.is_empty() {
+        default_name()
+    } else {
+        trimmed.to_string()
+    };
+    config.set(NAME_KEY, value);
+    config.save();
+}

@@ -15,6 +15,9 @@ pub type ThumbnailFn = Rc<dyn Fn(&str, &gtk::Picture)>;
 #[derive(Clone, Debug, Default)]
 pub struct SourceInfo {
     pub is_local: bool,
+    pub can_mount: bool,
+    pub is_mounted: bool,
+    pub mount_name: String,
     pub display_name: Option<String>,
     pub fs_label: Option<String>,
     pub root_icon_svg: Option<String>,
@@ -68,6 +71,8 @@ struct Views {
     selection_model: gtk::MultiSelection,
     breadcrumbs_box: gtk::Box,
     source_label: gtk::Label,
+    btn_webdav: gtk::Button,
+    btn_webdav_sep: gtk::Separator,
     status_label: gtk::Label,
     item_progress_bars: Rc<RefCell<HashMap<String, gtk::ProgressBar>>>,
     filter_bar: gtk::Box,
@@ -173,6 +178,7 @@ pub enum FmPanelOutput {
     NavigateUp,
     NavigateLevel(usize),
     NavigateTyped(String),
+    Mount,
     Refresh,
     HistoryBack,
     HistoryForward,
@@ -921,6 +927,36 @@ impl SimpleComponent for FmPanelModel {
             header.pack_start(&btn_chmod);
         }
 
+        let btn_webdav_sep = gtk::Separator::builder()
+            .orientation(gtk::Orientation::Vertical)
+            .margin_top(8)
+            .margin_bottom(8)
+            .build();
+        if with_default_toolbar {
+            header.pack_start(&btn_webdav_sep);
+        }
+        let btn_webdav = mk_icon_btn(
+            "/com/fm-ui/gtk/netdrive.svg",
+            crate::i18n::tr("fm.mount_webdav").to_string(),
+        );
+        {
+            let sender = sender.clone();
+            let source = shared.source.clone();
+            btn_webdav.connect_clicked(move |_| {
+                let (mounted, name) = {
+                    let s = source.borrow();
+                    (s.is_mounted, s.mount_name.clone())
+                };
+                let sender = sender.clone();
+                confirm_mount_toggle(mounted, &name, move || {
+                    let _ = sender.output(FmPanelOutput::Mount);
+                });
+            });
+        }
+        if with_default_toolbar {
+            header.pack_start(&btn_webdav);
+        }
+
 
         let view_switcher = gtk::Box::new(gtk::Orientation::Horizontal, 0);
         view_switcher.add_css_class("linked");
@@ -1494,6 +1530,8 @@ impl SimpleComponent for FmPanelModel {
             selection_model,
             breadcrumbs_box,
             source_label,
+            btn_webdav,
+            btn_webdav_sep,
             status_label,
             item_progress_bars,
             filter_bar: filter_bar.clone(),
@@ -1596,7 +1634,10 @@ impl SimpleComponent for FmPanelModel {
                 *self.shared.current_path.borrow_mut() = parts.clone();
                 *self.shared.cached_entries.borrow_mut() = display;
                 let fs_label = source.fs_label.clone();
+                let can_mount = source.can_mount;
                 *self.shared.source.borrow_mut() = source;
+                self.views.btn_webdav.set_visible(can_mount);
+                self.views.btn_webdav_sep.set_visible(can_mount);
                 self.breadcrumb = breadcrumb;
                 self.views
                     .source_label
@@ -2386,4 +2427,35 @@ mod tests {
         assert!(crumbs.iter().all(|c| c.icon == "/com/fm-ui/gtk/folder.svg"));
         assert!(crumbs.iter().all(|c| c.icon_svg.is_none()));
     }
+}
+
+fn confirm_mount_toggle<F: Fn() + 'static>(mounted: bool, name: &str, on_confirm: F) {
+    let key = |suffix: &str| {
+        format!(
+            "fm.webdav.{}_{suffix}",
+            if mounted { "unmount" } else { "mount" }
+        )
+    };
+    let dialog = adw::AlertDialog::new(
+        Some(&crate::i18n::tr(&key("title"))),
+        Some(&crate::i18n::trf(&key("body"), &[("name", name)])),
+    );
+    dialog.add_response("cancel", &crate::i18n::tr("fm.webdav.cancel"));
+    dialog.add_response("go", &crate::i18n::tr(&key("btn")));
+    dialog.set_response_appearance(
+        "go",
+        if mounted {
+            adw::ResponseAppearance::Destructive
+        } else {
+            adw::ResponseAppearance::Suggested
+        },
+    );
+    dialog.set_default_response(Some("go"));
+    dialog.set_close_response("cancel");
+    dialog.connect_response(None, move |_, resp| {
+        if resp == "go" {
+            on_confirm();
+        }
+    });
+    dialog.present(None::<&gtk::Widget>);
 }

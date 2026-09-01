@@ -37,9 +37,14 @@ serde = { workspace = true, features = ["derive"] }
 futures-util = "0.3"
 bytes = { workspace = true }
 
+client-core = { workspace = true, optional = true }
+web-davserver = { workspace = true, optional = true }
+nodeinnet-p2p = { workspace = true, optional = true }
+
 [features]
 default = ["gtk"]
 # GTK presentation half: the `gtk_fm_ui::FileSystemRpc` impls (thumbnails,
 # on_item_bound, mount dialogs) and the gio-backed drive enumeration. Off = the
 # providers expose only the GTK-free `fm_core` data trait (headless).
 gtk = ["dep:gtk", "dep:adw", "dep:gtk-fm-ui"]
+nodeinnet = ["dep:client-core", "dep:web-davserver", "dep:nodeinnet-p2p", "fm-core/nodeinnet"]

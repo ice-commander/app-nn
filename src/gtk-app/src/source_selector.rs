@@ -61,8 +61,12 @@ pub fn create_source_selector(
     router: Rc<PanelRouter>,
     stack: Stack,
     selector_updaters: Rc<std::cell::RefCell<Vec<Rc<dyn Fn()>>>>,
+    net_tx: crate::core::NetCmdSender,
+    online_nodes: Rc<std::cell::RefCell<Vec<nodeinnet_p2p::NodeInfo>>>,
+    my_device_id: String,
     on_open_registry: Rc<dyn Fn()>,
     on_open_process_manager: Rc<dyn Fn()>,
+    on_open_account: Rc<dyn Fn()>,
 ) -> Box {
     #[cfg(not(target_os = "windows"))]
     let _ = &on_open_registry;
@@ -72,6 +76,91 @@ pub fn create_source_selector(
         .hexpand(true)
         .vexpand(true)
         .build();
+
+    let share_folder_action = Rc::new({
+        let stack = stack.clone();
+        let selector_updaters = selector_updaters.clone();
+        let net_tx = net_tx.clone();
+        let my_device_id = my_device_id.clone();
+        let config = config.clone();
+
+        move || {
+            if let Some(root) = stack.root() {
+                if let Some(win) = root.downcast_ref::<gtk::Window>() {
+                    let parent_win_for_select = win.clone();
+                    let parent_win_for_closure = win.clone();
+                    let updaters = selector_updaters.clone();
+                    let net_tx_clone = net_tx.clone();
+                    let my_device_id_clone = my_device_id.clone();
+                    let config_dialog = config.clone();
+
+                    crate::utils::select_folder(
+                        &parent_win_for_select,
+                        &*crate::i18n::tr("selector.select_folder_to_share"),
+                        move |path| {
+                            let path_str = path.to_string_lossy().to_string();
+                            let default_name = path
+                                .file_name()
+                                .map(|n| n.to_string_lossy().to_string())
+                                .unwrap_or_else(|| crate::i18n::tr("selector.shared_folder_default").to_string());
+
+                            let entry_dialog = adw::MessageDialog::new(
+                                Some(&parent_win_for_closure),
+                                Some(&*crate::i18n::tr("selector.share_resource_name")),
+                                None,
+                            );
+                            entry_dialog
+                                .set_body(&*crate::i18n::tr("selector.enter_resource_name"));
+
+                            let entry = gtk::Entry::builder()
+                                .placeholder_text(&*crate::i18n::tr("selector.resource_placeholder"))
+                                .text(&default_name)
+                                .build();
+
+                            entry_dialog.set_extra_child(Some(&entry));
+                            entry_dialog.add_response("cancel", &*crate::i18n::tr("common.cancel"));
+                            entry_dialog.add_response("share", &*crate::i18n::tr("account.share"));
+                            entry_dialog.set_default_response(Some("share"));
+                            entry_dialog.set_response_appearance(
+                                "share",
+                                adw::ResponseAppearance::Suggested,
+                            );
+
+                            let path_str_dialog = path_str.clone();
+                            let updaters_dialog = updaters.clone();
+                            let net_tx_dialog = net_tx_clone.clone();
+                            let my_device_id_dialog = my_device_id_clone.clone();
+                            let config_response = config_dialog.clone();
+
+                            entry_dialog.connect_response(None, move |d, response| {
+                                if response == "share" {
+                                    let mut name = entry.text().to_string();
+                                    if name.is_empty() {
+                                        name = default_name.clone();
+                                    }
+
+                                    crate::shares::add_share(&config_response, &name, &path_str_dialog);
+                                    crate::shares::reload_resources(
+                                        &config_response,
+                                        &my_device_id_dialog,
+                                        &net_tx_dialog,
+                                    );
+
+                                    for updater in updaters_dialog.borrow().iter() {
+                                        updater();
+                                    }
+                                }
+                                d.close();
+                            });
+
+                            entry_dialog.present();
+                        },
+                    );
+                }
+            }
+        }
+    });
+
 
     let empty_title = Box::new(Orientation::Horizontal, 0);
     let header = adw::HeaderBar::builder()
@@ -93,6 +182,20 @@ pub fn create_source_selector(
         .build();
     btn_ftp.add_css_class("flat");
     btn_ftp.set_cursor_from_name(Some("pointer"));
+    let btn_peer_box = Box::new(Orientation::Horizontal, 6);
+    let btn_peer_img = gtk::Image::from_resource("/com/icecommander/gtk/nodeinnet-fm.svg");
+    btn_peer_img.set_pixel_size(20);
+    btn_peer_box.append(&btn_peer_img);
+    btn_peer_box.append(&Label::new(Some(&*crate::i18n::tr("selector.btn_share_folder"))));
+
+    let btn_peer = Button::builder()
+        .child(&btn_peer_box)
+        .tooltip_text(&*crate::i18n::tr("selector.tooltip_share_not_shared"))
+        .build();
+    btn_peer.add_css_class("flat");
+    btn_peer.set_cursor_from_name(Some("pointer"));
+    #[cfg(feature = "nodeinnet")]
+    header.pack_start(&btn_peer);
     header.pack_start(&btn_ftp);
 
     #[cfg(target_os = "windows")]
@@ -266,11 +369,31 @@ pub fn create_source_selector(
         let favorites_only_check = favorites_only_check.clone();
         let favorites_hint_label = favorites_hint_label.clone();
         let selector_updaters_clone = selector_updaters.clone();
+        let btn_peer_clone = btn_peer.clone();
+        let share_folder_action_clone = share_folder_action.clone();
+        let on_open_account_clone = on_open_account.clone();
         #[cfg(target_os = "windows")]
         let on_open_registry_clone = on_open_registry.clone();
         let config = config.clone();
 
         Rc::new(move || {
+            let shares = crate::shares::get_shares(&config);
+            match shares.len() {
+                0 => btn_peer_clone
+                    .set_tooltip_text(Some(&crate::i18n::tr("selector.tooltip_share_not_shared"))),
+                1 => {
+                    let path = shares.values().next().cloned().unwrap_or_default();
+                    btn_peer_clone.set_tooltip_text(Some(&crate::i18n::trf(
+                        "selector.tooltip_share_path_current",
+                        &[("path", &*path)],
+                    )));
+                }
+                n => btn_peer_clone.set_tooltip_text(Some(&crate::i18n::trf(
+                    "selector.tooltip_share_path_current",
+                    &[("path", &*format!("{n}"))],
+                ))),
+            }
+
             let favorites_only = crate::favorites::is_favorites_only(&config);
             if favorites_only_check.is_active() != favorites_only {
                 favorites_only_check.set_active(favorites_only);
@@ -281,7 +404,25 @@ pub fn create_source_selector(
                 list_box.remove(&child);
             }
 
-            let all_drives = crate::drives::get_all_app_drives(&config);
+            let active_p2p = {
+                router
+                    .provider()
+                    .connection_id()
+                    .and_then(|conn_id| {
+                        if conn_id.starts_with("p2p://") {
+                            let parts: Vec<&str> = conn_id["p2p://".len()..].split('@').collect();
+                            if parts.len() == 2 {
+                                Some((parts[0].to_string(), parts[1].to_string()))
+                            } else {
+                                None
+                            }
+                        } else {
+                            None
+                        }
+                    })
+            };
+
+            let all_drives = crate::drives::get_all_app_drives(&config, &online_nodes.borrow(), active_p2p);
 
             for p in &all_drives {
                 match &p.item {
@@ -290,9 +431,10 @@ pub fn create_source_selector(
                         let router_root = router.clone();
                         let stack_root = stack.clone();
                         let item_root = p.item.clone();
+                        let net_tx_row0 = net_tx.clone();
                         row_root.connect_activated(move |_| {
                             if let crate::drives::DriveActivation::Shown =
-                                crate::drives::activate_drive_item(&item_root, &router_root)
+                                crate::drives::activate_drive_item(&item_root, &router_root, &net_tx_row0)
                             {
                                 stack_root.set_visible_child_name("filemanager");
                             }
@@ -305,9 +447,10 @@ pub fn create_source_selector(
                         let router_home = router.clone();
                         let stack_home = stack.clone();
                         let item_home = p.item.clone();
+                        let net_tx_row1 = net_tx.clone();
                         row_home.connect_activated(move |_| {
                             if let crate::drives::DriveActivation::Shown =
-                                crate::drives::activate_drive_item(&item_home, &router_home)
+                                crate::drives::activate_drive_item(&item_home, &router_home, &net_tx_row1)
                             {
                                 stack_home.set_visible_child_name("filemanager");
                             }
@@ -325,9 +468,10 @@ pub fn create_source_selector(
                         let router_drive = router.clone();
                         let stack_drive = stack.clone();
                         let item_drive = p.item.clone();
+                        let net_tx_row2 = net_tx.clone();
                         row_drive.connect_activated(move |_| {
                             if let crate::drives::DriveActivation::Shown =
-                                crate::drives::activate_drive_item(&item_drive, &router_drive)
+                                crate::drives::activate_drive_item(&item_drive, &router_drive, &net_tx_row2)
                             {
                                 stack_drive.set_visible_child_name("filemanager");
                             }
@@ -436,14 +580,204 @@ pub fn create_source_selector(
                     let stack_vol = stack.clone();
                     let router_clone = router.clone();
                     let item_conn = p.item.clone();
+                    let net_tx_row3 = net_tx.clone();
                     row_vol.connect_activated(move |_| {
                         if let crate::drives::DriveActivation::Shown =
-                            crate::drives::activate_drive_item(&item_conn, &router_clone)
+                            crate::drives::activate_drive_item(&item_conn, &router_clone, &net_tx_row3)
                         {
                             stack_vol.set_visible_child_name("filemanager");
                         }
                     });
                     list_box.append(&row_vol);
+                }
+            }
+
+            #[cfg(feature = "nodeinnet")]
+            {
+                let mut p2p_drives = Vec::new();
+                for p in &all_drives {
+                    if let crate::drives::AppDriveItem::RemotePeer { .. } = &p.item {
+                        p2p_drives.push(p.clone());
+                    }
+                }
+
+                p2p_drives.sort_by(|a, b| b.is_favorite.cmp(&a.is_favorite));
+
+                let mut added_header = false;
+                for p in p2p_drives {
+                    if let crate::drives::AppDriveItem::RemotePeer { peer_id, resource_id, .. } = &p.item {
+                        if !added_header {
+                            let header_row = adw::ActionRow::builder()
+                                .title(&format!("<b>{}</b>", crate::i18n::tr("selector.discovered_filesystems_section")))
+                                .selectable(false)
+                                .activatable(false)
+                                .build();
+                            list_box.append(&header_row);
+                            added_header = true;
+                        }
+
+                        let display_name = if p.is_favorite {
+                            format!("⭐ {}", p.name)
+                        } else {
+                            p.name.clone()
+                        };
+
+                        let row_vol = add_source_row(
+                            &display_name,
+                            &p.subtitle,
+                            "connect.svg",
+                            if p.is_online { Some(&p.key) } else { None },
+                            &selector_updaters_clone,
+                        );
+
+                        if p.is_online {
+                            let stack_vol = stack.clone();
+                            let peer_id_clone = peer_id.clone();
+                            let resource_id_clone = resource_id.clone();
+                            let net_tx_clone = net_tx.clone();
+                            let router_clone = router.clone();
+                            let online_nodes_clone = online_nodes.clone();
+
+                            row_vol.connect_activated(move |row| {
+                                let nodes = online_nodes_clone.borrow();
+                                if let Some(node_fresh) = nodes.iter().find(|n| n.id == peer_id_clone && n.is_online) {
+                                    let fs_res_fresh = node_fresh.resources.iter().find(|r| {
+                                        r.id == resource_id_clone && r.resource_type == nodeinnet_p2p::ResourceType::Filesystem
+                                    });
+                                    if let Some(fs_res) = fs_res_fresh {
+                                        let item = crate::drives::AppDriveItem::RemotePeer {
+                                            peer_id: peer_id_clone.clone(),
+                                            resource_id: fs_res.id.clone(),
+                                            name: String::new(),
+                                        };
+                                        if let crate::drives::DriveActivation::Shown =
+                                            crate::drives::activate_drive_item(&item, &router_clone, &net_tx_clone)
+                                        {
+                                            stack_vol.set_visible_child_name("filemanager");
+                                        }
+                                    } else {
+                                        let err_dialog = adw::MessageDialog::builder()
+                                            .heading(&*crate::i18n::tr("selector.mount_failed_title"))
+                                            .body(&*crate::i18n::tr("selector.selected_filesystem_unshared_body"))
+                                            .build();
+                                        if let Some(window) = row.root().and_downcast::<gtk::Window>() {
+                                            err_dialog.set_transient_for(Some(&window));
+                                        }
+                                        err_dialog.add_response("ok", &*crate::i18n::tr("selector.ok"));
+                                        err_dialog.present();
+                                    }
+                                }
+                            });
+                        } else {
+                            row_vol.set_sensitive(false);
+                        }
+                        list_box.append(&row_vol);
+                    }
+                }
+            }
+
+            #[cfg(feature = "nodeinnet")]
+            {
+                let my_shares = crate::shares::get_shares(&config);
+
+                let p2p_header_row = adw::ActionRow::builder()
+                    .title(&format!("<b>{}</b>", crate::i18n::tr("selector.my_shared_resources_section")))
+                    .selectable(false)
+                    .activatable(false)
+                    .build();
+
+                let add_p2p_img = gtk::Image::from_resource("/com/icecommander/gtk/nodeinnet-fm.svg");
+                add_p2p_img.set_pixel_size(20);
+                let add_p2p_btn = gtk::Button::builder()
+                    .child(&add_p2p_img)
+                    .css_classes(vec!["flat"])
+                    .tooltip_text(&*crate::i18n::tr("selector.btn_share_folder"))
+                    .valign(Align::Center)
+                    .build();
+                add_p2p_btn.set_cursor_from_name(Some("pointer"));
+                add_p2p_btn.set_focusable(false);
+
+                let share_folder_action_p2p = share_folder_action_clone.clone();
+                add_p2p_btn.connect_clicked(move |_| {
+                    share_folder_action_p2p();
+                });
+                p2p_header_row.add_suffix(&add_p2p_btn);
+                list_box.append(&p2p_header_row);
+
+                if my_shares.is_empty() {
+                    let has_account = config.get::<String>("app.account_login")
+                        .map(|s| !s.is_empty())
+                        .unwrap_or(false);
+
+                    if !has_account {
+                        let auth_row = adw::ActionRow::builder()
+                            .title(&*crate::i18n::tr("selector.not_authorized"))
+                            .subtitle(&*crate::i18n::tr("selector.click_to_authorize"))
+                            .activatable(true)
+                            .build();
+                        let auth_icon = gtk::Image::from_resource("/com/icecommander/gtk/login.svg");
+                        auth_icon.set_pixel_size(24);
+                        auth_row.add_prefix(&auth_icon);
+
+                        let on_open_account_click = on_open_account_clone.clone();
+                        auth_row.connect_activated(move |_| {
+                            on_open_account_click();
+                        });
+                        list_box.append(&auth_row);
+                    } else {
+                        let placeholder_row = adw::ActionRow::builder()
+                            .title(&*crate::i18n::tr("selector.no_folders_shared"))
+                            .subtitle(&*crate::i18n::tr("selector.click_or_add_to_share"))
+                            .activatable(true)
+                            .build();
+                        let folder_icon = gtk::Image::from_resource("/com/icecommander/gtk/nodeinnet-fm.svg");
+                        folder_icon.set_pixel_size(24);
+                        placeholder_row.add_prefix(&folder_icon);
+
+                        let share_folder_action_p2p = share_folder_action_clone.clone();
+                        placeholder_row.connect_activated(move |_| {
+                            share_folder_action_p2p();
+                        });
+                        list_box.append(&placeholder_row);
+                    }
+                } else {
+                    for (share_name, share_path) in my_shares {
+                        let row = adw::ActionRow::builder()
+                            .title(&share_name)
+                            .subtitle(&share_path)
+                            .build();
+
+                        let folder_img =
+                            gtk::Image::from_resource("/com/icecommander/gtk/fileexplorer.svg");
+                        folder_img.set_pixel_size(30);
+                        row.add_prefix(&folder_img);
+
+                        let del_btn_img = gtk::Image::from_resource("/com/icecommander/gtk/close.svg");
+                        del_btn_img.set_pixel_size(24);
+                        let del_btn = gtk::Button::builder()
+                            .child(&del_btn_img)
+                            .css_classes(vec!["flat", "destructive-action"])
+                            .build();
+
+                        let net_tx_clone = net_tx.clone();
+                        let my_device_id_clone = my_device_id.clone();
+                        let updaters_clone = selector_updaters_clone.clone();
+                        let config_del = config.clone();
+                        del_btn.connect_clicked(move |_| {
+                            crate::shares::remove_share(&config_del, &share_name);
+                            crate::shares::reload_resources(
+                                &config_del,
+                                &my_device_id_clone,
+                                &net_tx_clone,
+                            );
+
+                            for updater in updaters_clone.borrow().iter() {
+                                updater();
+                            }
+                        });
+                        row.add_suffix(&del_btn);
+                        list_box.append(&row);
+                    }
                 }
             }
         })

@@ -85,6 +85,7 @@
   "fm.rename_selected": "Перайменаваць вылучанае",
   "fm.rename_title": "Перайменаваць элемент",
   "fm.root_tooltip": "Каранёвая папка",
+  "fm.select_file_upload": "Выберыце файл для загрузкі",
   "fm.select_mask_placeholder": "Вылучыць па масцы, напр. *.txt",
   "fm.select_other_source": "Выбраць іншую крыніцу",
   "fm.small_icons": "Дробныя значкі",
@@ -98,11 +99,18 @@
   "fm.status.selected_multiple": "Вылучана: %{folders}, %{files}",
   "fm.to": "Куды:",
   "fm.upload_file": "Загрузіць файл у бягучую папку",
+  "fm.webdav.cancel": "Скасаваць",
   "fm.webdav.close": "Закрыць",
   "fm.webdav.creds_format": "\n\nАўтарызацыя (згенеравана):\nЛогін: %{user}\nПароль: %{pass}",
+  "fm.webdav.mount_body": "Падключыць «%{name}» як лакальны дыск? Ён будзе бачны ў файлавым мэнэджары, пакуль вы яго не адключыце.",
+  "fm.webdav.mount_btn": "Падключыць",
+  "fm.webdav.mount_title": "Падключыць дыск?",
   "fm.webdav.running_desc": "WebDAV сервер ПРАЦУЕ на порце %{port}.\n\nДыск прымантаваны. Націсніце 'Спыніць сервер', каб размантаваць дыск і спыніць сервер.",
   "fm.webdav.start_desc": "Запусціць лакальны WebDAV сервер на порце %{port}?%{creds}\n\nДыск будзе прымантаваны да вашай сістэмы:",
   "fm.webdav.start_server": "Запусціць сервер",
   "fm.webdav.stop_server": "Спыніць сервер",
-  "fm.webdav.title": "WebDAV: %{name}"
+  "fm.webdav.title": "WebDAV: %{name}",
+  "fm.webdav.unmount_body": "Адключыць «%{name}»? Адкрытыя з гэтага дыска файлы могуць перастаць працаваць.",
+  "fm.webdav.unmount_btn": "Адключыць",
+  "fm.webdav.unmount_title": "Адключыць дыск?"
 }

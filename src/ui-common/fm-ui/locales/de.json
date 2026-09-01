@@ -85,6 +85,7 @@
   "fm.rename_selected": "Auswahl umbenennen",
   "fm.rename_title": "Element umbenennen",
   "fm.root_tooltip": "Stammverzeichnis",
+  "fm.select_file_upload": "Datei zum Hochladen auswählen",
   "fm.select_mask_placeholder": "Nach Maske auswählen, z. B. *.txt",
   "fm.select_other_source": "Andere Quelle auswählen",
   "fm.small_icons": "Kleine Symbole",
@@ -98,11 +99,18 @@
   "fm.status.selected_multiple": "Ausgewählt: %{folders} Ordner, %{files} Dateien",
   "fm.to": "Ziel:",
   "fm.upload_file": "Datei in aktuellen Ordner hochladen",
+  "fm.webdav.cancel": "Abbrechen",
   "fm.webdav.close": "Schließen",
   "fm.webdav.creds_format": "\n\nAnmeldedaten (automatisch generiert):\nBenutzer: %{user}\nPasswort: %{pass}",
+  "fm.webdav.mount_body": "„%{name}“ als lokales Laufwerk verbinden? Es bleibt im Dateimanager, bis Sie es trennen.",
+  "fm.webdav.mount_btn": "Verbinden",
+  "fm.webdav.mount_title": "Laufwerk verbinden?",
   "fm.webdav.running_desc": "Der WebDAV-Server LÄUFT auf Port %{port}.\n\nDas Laufwerk ist eingebunden. Klicken Sie auf 'Server stoppen', um es auszubinden und den Server zu stoppen.",
   "fm.webdav.start_desc": "Lokalen WebDAV-Server auf Port %{port} starten?%{creds}\n\nWir werden das Laufwerk in Ihr System einbinden:",
   "fm.webdav.start_server": "Server starten",
   "fm.webdav.stop_server": "Server stoppen",
-  "fm.webdav.title": "WebDAV: %{name}"
+  "fm.webdav.title": "WebDAV: %{name}",
+  "fm.webdav.unmount_body": "„%{name}“ trennen? Noch geöffnete Dateien von diesem Laufwerk können unbrauchbar werden.",
+  "fm.webdav.unmount_btn": "Trennen",
+  "fm.webdav.unmount_title": "Laufwerk trennen?"
 }

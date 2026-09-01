@@ -1,8 +1,8 @@
 [Desktop Entry]
-Name=Ice Commander
+Name=Ice Commander (node.in.net)
 Comment=Ice Commander - Dual-Pane File Manager
-Exec=ice-commander
-Icon=com.icecommander.gtkapp
+Exec=nodeinnet-ice-commander
+Icon=com.nodeinnet.icecommander.gtkapp
 Terminal=false
 Type=Application
 Categories=System;Utility;Security;Network;Internet

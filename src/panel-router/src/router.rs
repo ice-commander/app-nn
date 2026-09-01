@@ -215,11 +215,26 @@ fn push_listing(state: &Rc<RouterState>, sender: &relm4::Sender<FmPanelInput>) {
     let is_local = root_fs.is_local();
     let source = SourceInfo {
         is_local,
+        can_mount: {
+            #[cfg(feature = "nodeinnet")]
+            {
+                root_fs.can_mount()
+            }
+            #[cfg(not(feature = "nodeinnet"))]
+            {
+                false
+            }
+        },
         display_name: root_fs.display_name(),
         fs_label: Some(if is_local { "Local FileSystem" } else { "Remote FileSystem" }.to_string()),
         root_icon: root_fs.get_icon(&root_rel),
         root_icon_svg: root_fs.get_icon_svg(&root_rel),
         connection_id: root_fs.connection_id(),
+        is_mounted: root_fs
+            .connection_id()
+            .map(|id| fm_core::mounts::is_mounted(&id))
+            .unwrap_or(false),
+        mount_name: root_fs.display_name().unwrap_or_default(),
     };
     let select_name = {
         let nav = state.path.borrow();

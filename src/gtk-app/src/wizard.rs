@@ -3,6 +3,11 @@ use gtk::{Align, Box, Button, DropDown, Label, ListBox, ListBoxRow, Orientation,
 use std::cell::RefCell;
 use std::rc::Rc;
 
+#[cfg(not(feature = "nodeinnet"))]
+use crate::core::client_core;
+#[cfg(feature = "nodeinnet")]
+use client_core;
+
 type Retrans = Rc<RefCell<Vec<Rc<dyn Fn()>>>>;
 
 fn reg(retrans: &Retrans, f: Rc<dyn Fn()>) {
@@ -28,11 +33,21 @@ pub fn should_show(config: &client_config::AppConfig) -> bool {
     !config.get::<bool>("ui.setup_wizard_done").unwrap_or(false)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn show_setup_wizard(
     parent_window: &gtk::Window,
     config: client_config::AppConfig,
+    ws_state: &Rc<RefCell<client_core::WsState>>,
+    active_dialog_graph: &Rc<RefCell<Option<crate::netgraph::NetGraph>>>,
+    online_nodes: &Rc<RefCell<Vec<nodeinnet_p2p::NodeInfo>>>,
+    my_info: &nodeinnet_p2p::NodeInfo,
+    net_tx: &crate::core::NetCmdSender,
+    login_btn_label: &gtk::Label,
     on_connections_changed: Rc<dyn Fn() + 'static>,
 ) {
+    #[cfg(not(feature = "nodeinnet"))]
+    let _ = (ws_state, active_dialog_graph, online_nodes, my_info, net_tx, login_btn_label);
+
     let wizard = gtk::Window::builder()
         .title("Welcome to Ice Commander")
         .transient_for(parent_window)
@@ -79,6 +94,24 @@ pub fn show_setup_wizard(
     let page2 = build_page_panels(&config, &retrans, on_connections_changed.clone());
     carousel.append(&page2);
     pages.push(page2.upcast());
+
+    #[cfg(feature = "nodeinnet")]
+    {
+        let page3 = build_page_account(
+            &wizard,
+            config.clone(),
+            &retrans,
+            ws_state,
+            active_dialog_graph,
+            online_nodes,
+            my_info,
+            net_tx,
+            login_btn_label,
+            on_connections_changed.clone(),
+        );
+        carousel.append(&page3);
+        pages.push(page3.upcast());
+    }
 
     let pages = Rc::new(pages);
 
@@ -598,5 +631,69 @@ fn build_page_panels(
     );
 
     content.append(&list);
+    scroll
+}
+
+#[cfg(feature = "nodeinnet")]
+#[allow(clippy::too_many_arguments)]
+fn build_page_account(
+    parent: &gtk::Window,
+    config: client_config::AppConfig,
+    retrans: &Retrans,
+    ws_state: &Rc<RefCell<client_core::WsState>>,
+    active_dialog_graph: &Rc<RefCell<Option<crate::netgraph::NetGraph>>>,
+    online_nodes: &Rc<RefCell<Vec<nodeinnet_p2p::NodeInfo>>>,
+    my_info: &nodeinnet_p2p::NodeInfo,
+    net_tx: &crate::core::NetCmdSender,
+    login_btn_label: &gtk::Label,
+    on_connections_changed: Rc<dyn Fn() + 'static>,
+) -> gtk::ScrolledWindow {
+    let _ = parent;
+    let (scroll, content) = page_shell(
+        retrans,
+        || crate::i18n::tr("wizard.account_title").to_string(),
+        || {
+            crate::i18n::tr("wizard.account_sub")
+            .to_string()
+        },
+    );
+
+    let close_cb: Rc<dyn Fn()> = Rc::new(|| {});
+    let account = crate::account::create_account_widget(
+        config.clone(),
+        ws_state,
+        active_dialog_graph,
+        online_nodes,
+        my_info,
+        net_tx,
+        login_btn_label,
+        close_cb,
+        Some(on_connections_changed),
+    );
+    content.append(&account);
+
+    let list = ListBox::builder().selection_mode(SelectionMode::None).build();
+    list.add_css_class("boxed-list");
+    let p2p_sw = Switch::builder()
+        .valign(Align::Center)
+        .active(config.get::<bool>("ui.p2p_enabled").unwrap_or(true))
+        .build();
+    let config_p2p = config.clone();
+    p2p_sw.connect_active_notify(move |sw| {
+        config_p2p.set("ui.p2p_enabled", sw.is_active());
+        config_p2p.save();
+    });
+    setting_row(
+        &list,
+        retrans,
+        || crate::i18n::tr("wizard.p2p_title").to_string(),
+        || {
+            crate::i18n::tr("wizard.p2p_desc")
+            .to_string()
+        },
+        &p2p_sw,
+    );
+    content.append(&list);
+
     scroll
 }

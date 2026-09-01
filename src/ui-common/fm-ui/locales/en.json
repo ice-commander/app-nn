@@ -85,6 +85,7 @@
   "fm.rename_selected": "Rename Selected",
   "fm.rename_title": "Rename Item",
   "fm.root_tooltip": "Root",
+  "fm.select_file_upload": "Select File to Upload",
   "fm.select_mask_placeholder": "Select by mask, e.g. *.txt",
   "fm.select_other_source": "Select Other Source",
   "fm.small_icons": "Small Icons",
@@ -98,11 +99,18 @@
   "fm.status.selected_multiple": "Selected: %{folders}, %{files}",
   "fm.to": "To:",
   "fm.upload_file": "Upload File to Current Folder",
+  "fm.webdav.cancel": "Cancel",
   "fm.webdav.close": "Close",
   "fm.webdav.creds_format": "\n\nCredentials (auto-generated):\nUser: %{user}\nPass: %{pass}",
+  "fm.webdav.mount_body": "Connect “%{name}” as a local drive? It appears in your file manager until you disconnect it.",
+  "fm.webdav.mount_btn": "Connect",
+  "fm.webdav.mount_title": "Connect drive?",
   "fm.webdav.running_desc": "WebDAV server is RUNNING on port %{port}.\n\nThe drive is mounted. Click 'Stop Server' to unmount and stop the server.",
   "fm.webdav.start_desc": "Start local WebDAV server on port %{port}?%{creds}\n\nWe will mount the drive to your system:",
   "fm.webdav.start_server": "Start Server",
   "fm.webdav.stop_server": "Stop Server",
-  "fm.webdav.title": "WebDAV: %{name}"
+  "fm.webdav.title": "WebDAV: %{name}",
+  "fm.webdav.unmount_body": "Disconnect “%{name}”? Files still open from this drive may stop working.",
+  "fm.webdav.unmount_btn": "Disconnect",
+  "fm.webdav.unmount_title": "Disconnect drive?"
 }

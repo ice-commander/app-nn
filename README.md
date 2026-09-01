@@ -1,30 +1,32 @@
-# Ice Commander
+# Ice Commander Node.In.Net mod
 
-A dual-pane file manager for the desktop, written in Rust with GTK4 and libadwaita.
+A fork of **[Ice Commander](https://github.com/ice-commander/app)** that adds peer-to-peer:
+sign in to a node.in.net account, and the second panel can point at another machine you own.
 
-Two panels side by side, keyboard-first, with the local disk, FTP, SFTP, WebDAV and
-archives all behaving the same way — the same navigation, the same copy, the same viewer.
+Everything from the original is here unchanged — two panels side by side, keyboard-first,
+with the local disk, FTP, SFTP, WebDAV and archives all behaving the same way. The peer is
+one more filesystem among them, navigated with the same keys.
 
-![Ice Commander dual-pane file manager ](docs/main-window.png)
+![Ice Commander Node.In.Net mod: the local system root in the left panel, a peer's
+filesystem reached over node.in.net in the right](docs/main-window.png)
 
-The repository builds three binaries from one workspace:
+The build produces one binary, `nodeinnet-ice-commander` — the GTK4 desktop application.
 
-| Binary          | What it is                                                 |
-| --------------- | ---------------------------------------------------------- |
-| `ice-commander` | the GTK desktop application                                |
-| `ice-console`   | a terminal UI, no GTK linked                               |
-| `ice-webserver` | a headless server that serves the same panels to a browser |
+### Where the pieces come from
 
-Licensed under **MIT OR Apache-2.0**.
+Two projects meet here. The panels, viewer, archives and remote filesystems are
+**[Ice Commander](https://github.com/ice-commander/app)**. The network half — the account,
+peer discovery, the transport and the handlers that serve a peer's files — comes from
+**[node.in.net](https://github.com/node-in-net/app)**, pulled in as the `p2p-common` and
+`p2p-functions` submodules and used through its published interfaces.
 
-### Looking for peer-to-peer?
+Licensed under **MIT OR Apache-2.0**. The submodules carry their own licences.
 
-Point the second panel at another machine you own. **[Ice Commander Node.In.Net
-mod](https://github.com/ice-commander/app-nn)** adds a node.in.net account, finds your
-devices and moves files straight between them — same two panels, same keys, nothing new to
-learn. It installs alongside this build instead of replacing it, so you can keep both.
+### Not the one you wanted?
 
-Want it to do something else entirely? Fork it. That is what the licence is for.
+**[Ice Commander](https://github.com/ice-commander/app)** is the original: the same two
+panels without the network half, no account, no submodules. This build installs alongside
+it rather than replacing it, so you can keep both and decide per task.
 
 ---
 
@@ -70,6 +72,30 @@ tunnel with its own credentials. The whole set can be exported and imported as o
 SFTP and FTP sessions are kept alive and reconnected on failure rather than dialled per
 operation.
 
+### Peers and shares
+
+Sign in with a node.in.net account and your devices find each other. Each one announces
+what it shares — pick a folder, give it a name, and it appears on your other machines as
+another entry in the source list, beside the local drives and the saved connections.
+
+Transfers go straight between the two machines over WebRTC, with the signalling server used
+only to introduce them. Copy, move, rename, delete and the viewer all work on a peer exactly
+as they do on a local disk.
+
+Shares can be added while the app is running: the new set is re-announced immediately, and
+peers see it without either side restarting.
+
+### Mounting a peer as a system drive
+
+A shared folder can be handed to the operating system as a real drive. The app starts a
+local WebDAV server that bridges to the peer, then asks the OS to mount it — the folder then
+opens in Nautilus, Explorer or Finder like any other network drive, and any program can read
+and write it, not only this one.
+
+The toolbar button toggles it: mount, and the drive opens in your file manager; press again
+and it is unmounted and the local server stops. Every mount is torn down when the app exits,
+so nothing is left dangling.
+
 ### Archives
 
 ZIP, TAR, TAR.GZ and TAR.BZ2 open as directories — you navigate into them, read files out
@@ -106,12 +132,6 @@ shell there. If the connection is configured with an SSH tunnel, the already-aut
 tunnel is reused instead of opening a second one. On a local panel it is your normal shell.
 
 Also a process list with kill, system information, and on Windows a registry editor.
-
-### Web UI and headless mode
-
-`ice-commander --headless --webui` starts an HTTP server and serves a React interface that
-mirrors the desktop panels. `ice-webserver` is the same interface without any GTK
-dependency at all — useful on a machine with no desktop session.
 
 ### Security of stored credentials
 
@@ -172,14 +192,11 @@ sudo pacman -S --needed base-devel cmake pkgconf gtk4 libadwaita dbus openssl
 Then:
 
 ```sh
-cargo build --release -p ice-commander-gtk     # desktop application
-cargo build --release -p console-app           # terminal UI
-cargo build --release -p webserver-app         # webserver application
+cargo build --release -p nodeinnet-ice-commander-gtk
 ```
 
 The GStreamer packages are for video playback and for the codec check the viewer does
-before opening a video. The two headless binaries need neither GTK nor GStreamer — build
-them with `-p console-app` / `-p webserver-app` and none of it is pulled in.
+before opening a video.
 
 ### macOS
 
@@ -189,7 +206,7 @@ stack and the GSettings schemas. Xcode Command Line Tools are needed for the C t
 
 ```sh
 brew install gtk4 libadwaita pkg-config glib
-cargo build --release -p ice-commander-gtk
+cargo build --release -p nodeinnet-ice-commander-gtk
 ```
 
 Video playback uses libmpv here rather than GStreamer:
@@ -206,8 +223,7 @@ brew install dylibbundler
 npm run build-distr-osx
 ```
 
-That builds the web UI, produces the bundle, copies and compiles the GTK GSettings schemas
-into it, rewrites the dynamic library paths with `dylibbundler`, adds `libpdfium.dylib`
+That compiles the GTK GSettings schemas into the bundle, rewrites the dynamic library paths with `dylibbundler`, adds `libpdfium.dylib`
 from `artifacts/` and signs the result ad-hoc. `builder/osx.sh` wraps the same steps and
 also produces a `.dmg`.
 
@@ -225,7 +241,7 @@ Build from an **MSYS2 MinGW64** shell:
 ```sh
 pacman -S --needed base-devel mingw-w64-x86_64-toolchain \
     mingw-w64-x86_64-gtk4 mingw-w64-x86_64-libadwaita mingw-w64-x86_64-pkgconf
-cargo build --release -p ice-commander-gtk
+cargo build --release -p nodeinnet-ice-commander-gtk
 ```
 
 Use the `x86_64-pc-windows-gnu` Rust target. MSVC is not what the release builds use.
@@ -244,18 +260,6 @@ desktop application:
 
 Prebuilt binaries are published by the `pdfium-binaries` project. Without it the
 application still builds; opening a PDF fails at runtime.
-
-### Web interface
-
-The browser UI lives in `src/web-app` (React + Vite). The built bundle is **committed** at
-`src/gtk-app/assets/webui/bundle.js` and embedded into the binaries, so if you change the
-frontend you must rebuild it or your change will not ship:
-
-```sh
-cd src/web-app && npm install && npm run build
-```
-
-The build script copies `bundle.js` and `style.css` into `src/gtk-app/assets/webui/`.
 
 ### Packaging
 
@@ -287,10 +291,6 @@ This section is deliberately blunt. These are current limitations, not a roadmap
 - **No SSH host-key verification.** The SFTP provider and the SSH tunnel authenticate
   immediately after the handshake; `known_hosts` is never consulted and no fingerprint is
   shown. SFTP connections are trivially interceptable on a hostile network.
-- **The web API has no authentication.** Every route of the headless server — including a
-  live terminal WebSocket and read/write access to any path the process can reach — is
-  open to whoever can reach the port. The only protection is the default `127.0.0.1` bind.
-  `--host 0.0.0.0` warns and then serves everyone.
 - **FTP is plaintext only.** FTPS is not enabled, so credentials and data cross the wire in
   the clear. WebDAV authenticates with HTTP Basic only.
 - **The default at-rest protection is a machine key**, derived from the machine id and the
@@ -336,14 +336,6 @@ This section is deliberately blunt. These are current limitations, not a roadmap
 
 ### Incomplete
 
-- **The console UI copies files only** — directory copy and move are not implemented. Its
-  viewer refuses files over 8 MB, its editor over 4 MB, and it is English-only regardless
-  of the language setting.
-- **The headless server is a first version**: no tab model (tab operations are accepted and
-  ignored), copy and move read the whole file into memory and do not recurse into
-  directories, and it always binds `127.0.0.1`.
-- **In GTK mode the web UI is a remote control, not an independent client.** Every browser
-  and the desktop window show the same directory; you cannot browse elsewhere in the tab.
 - **Several dialogs are hard-coded English** despite the 15 locales: permissions/chmod, the
   overwrite prompt, the transfer-error dialog, the terminal context menu and part of the
   help. They are marked `TODO(i18n)` in the source.

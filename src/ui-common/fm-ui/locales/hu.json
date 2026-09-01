@@ -85,6 +85,7 @@
   "fm.rename_selected": "Kijelölt átnevezése",
   "fm.rename_title": "Elem átnevezése",
   "fm.root_tooltip": "Gyökér",
+  "fm.select_file_upload": "Fájl kiválasztása a feltöltéshez",
   "fm.select_mask_placeholder": "Kijelölés maszk alapján, pl. *.txt",
   "fm.select_other_source": "Másik forrás kiválasztása",
   "fm.small_icons": "Kis ikonok",
@@ -98,11 +99,18 @@
   "fm.status.selected_multiple": "Kijelölve: %{folders} mappa, %{files} fájl",
   "fm.to": "Cél:",
   "fm.upload_file": "Fájl feltöltése a jelenlegi mappába",
+  "fm.webdav.cancel": "Mégse",
   "fm.webdav.close": "Bezárás",
   "fm.webdav.creds_format": "\n\nHitelesítő adatok (automatikusan generált):\nFelhasználó: %{user}\nJelszó: %{pass}",
+  "fm.webdav.mount_body": "Csatlakoztatja a(z) „%{name}” meghajtót helyiként? A fájlkezelőben marad, amíg le nem választja.",
+  "fm.webdav.mount_btn": "Csatlakoztatás",
+  "fm.webdav.mount_title": "Csatlakoztatja a meghajtót?",
   "fm.webdav.running_desc": "A WebDAV szerver FUT a %{port} porton.\n\nA meghajtó csatolva van. Kattintson a 'Szerver leállítása' gombra a leválasztáshoz és a leállításhoz.",
   "fm.webdav.start_desc": "Elindítja a helyi WebDAV szervert a %{port} porton?%{creds}\n\nCsatolni fogjuk a meghajtót a rendszeréhez:",
   "fm.webdav.start_server": "Szerver indítása",
   "fm.webdav.stop_server": "Szerver leállítása",
-  "fm.webdav.title": "WebDAV: %{name}"
+  "fm.webdav.title": "WebDAV: %{name}",
+  "fm.webdav.unmount_body": "Leválasztja a(z) „%{name}” meghajtót? A róla még megnyitott fájlok működésképtelenné válhatnak.",
+  "fm.webdav.unmount_btn": "Leválasztás",
+  "fm.webdav.unmount_title": "Leválasztja a meghajtót?"
 }

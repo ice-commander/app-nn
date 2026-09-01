@@ -1,0 +1,13 @@
+{
+  "graph.apply_btn": "Прымяніць",
+  "graph.device_name_label": "Імя прылады:",
+  "graph.device_name_placeholder": "Імя прылады",
+  "graph.logged_in_as": "Вы ўвайшлі як: %{user}",
+  "graph.this_android": "Гэта Android прылада",
+  "graph.this_device": "Гэта прылада",
+  "graph.this_ios": "Гэты iPhone/iPad",
+  "graph.this_linux": "Гэты Linux ПК",
+  "graph.this_macos": "Гэты Apple Mac",
+  "graph.this_windows": "Гэты Windows ПК",
+  "graph.welcome": "Сардэчна запрашаем у %{title}!"
+}

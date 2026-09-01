@@ -85,6 +85,7 @@
   "fm.rename_selected": "Переименовать выделенное",
   "fm.rename_title": "Переименовать элемент",
   "fm.root_tooltip": "Корневая папка",
+  "fm.select_file_upload": "Выберите файл для загрузки",
   "fm.select_mask_placeholder": "Выделить по маске, напр. *.txt",
   "fm.select_other_source": "Выбрать другой источник",
   "fm.small_icons": "Мелкие значки",
@@ -98,11 +99,18 @@
   "fm.status.selected_multiple": "Выделено: %{folders}, %{files}",
   "fm.to": "Куда:",
   "fm.upload_file": "Загрузить файл в текущую папку",
+  "fm.webdav.cancel": "Отмена",
   "fm.webdav.close": "Закрыть",
   "fm.webdav.creds_format": "\n\nАвторизация (сгенерировано):\nЛогин: %{user}\nПароль: %{pass}",
+  "fm.webdav.mount_body": "Подключить «%{name}» как локальный диск? Он будет виден в файловом менеджере, пока вы его не отключите.",
+  "fm.webdav.mount_btn": "Подключить",
+  "fm.webdav.mount_title": "Подключить диск?",
   "fm.webdav.running_desc": "WebDAV сервер РАБОТАЕТ на порту %{port}.\n\nДиск примонтирован. Нажмите 'Остановить сервер', чтобы размонтировать диск и остановить сервер.",
   "fm.webdav.start_desc": "Запустить локальный WebDAV сервер на порту %{port}?%{creds}\n\nДиск будет примонтирован к вашей системе:",
   "fm.webdav.start_server": "Запустить сервер",
   "fm.webdav.stop_server": "Остановить сервер",
-  "fm.webdav.title": "WebDAV: %{name}"
+  "fm.webdav.title": "WebDAV: %{name}",
+  "fm.webdav.unmount_body": "Отключить «%{name}»? Открытые с этого диска файлы могут перестать работать.",
+  "fm.webdav.unmount_btn": "Отключить",
+  "fm.webdav.unmount_title": "Отключить диск?"
 }

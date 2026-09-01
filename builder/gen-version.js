@@ -143,15 +143,15 @@ function updateBuildGradle(gradlePath) {
 const setupByType = {
 	gui: {
 		nsi: path.join(__dirname, '..', 'src', 'gtk-app', 'setup.nsi'),
-		out: `ice-commander-${version}-1-win64.exe`,
+		out: `nodeinnet-ice-commander-${version}-1-win64.exe`,
 	},
 	webserver: {
 		nsi: path.join(__dirname, '..', 'src', 'webserver-app', 'setup.nsi'),
-		out: `ice-commander-webserver-${version}-1-win64.exe`,
+		out: `nodeinnet-ice-commander-webserver-${version}-1-win64.exe`,
 	},
 	console: {
 		nsi: path.join(__dirname, '..', 'src', 'console-app', 'setup.nsi'),
-		out: `ice-commander-console-${version}-1-win64.exe`,
+		out: `nodeinnet-ice-commander-console-${version}-1-win64.exe`,
 	},
 };
 if (setupByType[app_type]) {

@@ -6,6 +6,11 @@ use relm4::prelude::*;
 use crate::drivestoolbar::create_drives_toolbar;
 use crate::source_selector::create_source_selector;
 
+#[cfg(feature = "nodeinnet")]
+use web_davserver;
+#[cfg(not(feature = "nodeinnet"))]
+use crate::core::web_davserver;
+
 
 #[derive(Clone)]
 pub struct PanelInfo {
@@ -55,10 +60,13 @@ pub fn build_panel(
     name: &str,
     initial_path: Option<String>,
     selector_updaters: std::rc::Rc<std::cell::RefCell<Vec<std::rc::Rc<dyn Fn()>>>>,
-    _my_device_id: String,
+    net_tx: crate::core::NetCmdSender,
+    online_nodes: std::rc::Rc<std::cell::RefCell<Vec<nodeinnet_p2p::NodeInfo>>>,
+    my_device_id: String,
     shift_held: std::rc::Rc<std::cell::Cell<bool>>,
     audio_player: crate::player::AudioPlayer,
     on_open_sysinfo: std::rc::Rc<dyn Fn()>,
+    on_open_account: std::rc::Rc<dyn Fn()>,
     config: client_config::AppConfig,
     term_output_tx: tokio::sync::broadcast::Sender<Vec<u8>>,
 ) -> PanelInfo {
@@ -93,9 +101,13 @@ pub fn build_panel(
                 &name_owned,
                 path,
                 selector_updaters.clone(),
+                net_tx.clone(),
+                online_nodes.clone(),
+                my_device_id.clone(),
                 shift_held.clone(),
                 audio_player.clone(),
                 on_open_sysinfo.clone(),
+                on_open_account.clone(),
                 config.clone(),
                 term_output_tx.clone(),
                 nav_hook.clone(),
@@ -446,9 +458,13 @@ fn build_tab(
     name: &str,
     initial_path: Option<String>,
     selector_updaters: std::rc::Rc<std::cell::RefCell<Vec<std::rc::Rc<dyn Fn()>>>>,
+    net_tx: crate::core::NetCmdSender,
+    online_nodes: std::rc::Rc<std::cell::RefCell<Vec<nodeinnet_p2p::NodeInfo>>>,
+    my_device_id: String,
     shift_held: std::rc::Rc<std::cell::Cell<bool>>,
     audio_player: crate::player::AudioPlayer,
     _on_open_sysinfo: std::rc::Rc<dyn Fn()>,
+    on_open_account: std::rc::Rc<dyn Fn()>,
     config: client_config::AppConfig,
     term_output_tx: tokio::sync::broadcast::Sender<Vec<u8>>,
     nav_hook: std::rc::Rc<std::cell::RefCell<Option<std::rc::Rc<dyn Fn()>>>>,
@@ -649,6 +665,8 @@ fn build_tab(
         router.clone(),
         stack.clone(),
         selector_updaters.clone(),
+        net_tx.clone(),
+        online_nodes.clone(),
         shift_held.clone(),
         config.clone(),
         nav_hook,
@@ -720,8 +738,12 @@ fn build_tab(
         router.clone(),
         stack.clone(),
         selector_updaters,
+        net_tx,
+        online_nodes,
+        my_device_id,
         on_open_registry,
         on_open_process_manager,
+        on_open_account,
     );
     stack.add_named(&selector_box, Some("selector"));
 
@@ -850,6 +872,36 @@ fn build_tab(
                             crate::viewer::show_viewer(&win, entry, router.clone());
                         }
                     }
+                    #[cfg(feature = "nodeinnet")]
+                    FmPanelOutput::Mount => {
+                        let provider = router.state.active_provider();
+                        let key = provider.connection_id().unwrap_or_default();
+                        let resource_id = router.current_resource_id();
+                        if fm_core::mounts::is_mounted(&key) {
+                            web_davserver::unmount_resource(&resource_id);
+                            fm_core::mounts::mark_unmounted(&key);
+                            router.refresh_spawned();
+                        } else if let Some(bridge) = provider.mount_bridge() {
+                            let drive_name =
+                                format!("P2P_{}", resource_id.chars().take(4).collect::<String>());
+                            match web_davserver::mount_resource(resource_id, drive_name, bridge) {
+                                Some(port) => {
+                                    fm_core::mounts::mark_mounted(&key);
+                                    web_davserver::open_in_explorer(port);
+                                    router.refresh_spawned();
+                                }
+                                None => {
+                                    let _ = router.fm.sender().send(FmPanelInput::OpFailed {
+                                        title: "Mount Failed".to_string(),
+                                        message: "Could not start the local WebDAV server"
+                                            .to_string(),
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    #[cfg(not(feature = "nodeinnet"))]
+                    FmPanelOutput::Mount => {}
                     FmPanelOutput::Extract { archive_path } => {
                         let rel = router.state.resolve_relative(&archive_path);
                         match router.state.active_provider().extract_archive(rel).await {

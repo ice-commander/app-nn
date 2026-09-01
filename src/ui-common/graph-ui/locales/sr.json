@@ -1,0 +1,13 @@
+{
+  "graph.apply_btn": "Примени",
+  "graph.device_name_label": "Назив уређаја:",
+  "graph.device_name_placeholder": "Назив уређаја",
+  "graph.logged_in_as": "Пријављени сте као: %{user}",
+  "graph.this_android": "Овај Android уређај",
+  "graph.this_device": "Овај уређај",
+  "graph.this_ios": "Овај iPhone/iPad",
+  "graph.this_linux": "Овај Linux рачунар",
+  "graph.this_macos": "Овај Apple Mac",
+  "graph.this_windows": "Овај Windows рачунар",
+  "graph.welcome": "Добро дошли у %{title}!"
+}

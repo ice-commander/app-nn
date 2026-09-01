@@ -85,6 +85,7 @@
   "fm.rename_selected": "Преименуване на избраното",
   "fm.rename_title": "Преименуване на елемент",
   "fm.root_tooltip": "Корен",
+  "fm.select_file_upload": "Избор на файл за качване",
   "fm.select_mask_placeholder": "Избор по маска, напр. *.txt",
   "fm.select_other_source": "Избор на друг източник",
   "fm.small_icons": "Малки икони",
@@ -98,11 +99,18 @@
   "fm.status.selected_multiple": "Избрано: %{folders} папки, %{files} файла",
   "fm.to": "В:",
   "fm.upload_file": "Качване на файл в текущата папка",
+  "fm.webdav.cancel": "Отказ",
   "fm.webdav.close": "Затваряне",
   "fm.webdav.creds_format": "\n\nИдентификационни данни (автоматично генерирани):\nПотребител: %{user}\nПарола: %{pass}",
+  "fm.webdav.mount_body": "Да се свърже ли „%{name}“ като локален диск? Ще остане във файловия мениджър, докато не го изключите.",
+  "fm.webdav.mount_btn": "Свързване",
+  "fm.webdav.mount_title": "Да се свърже ли дискът?",
   "fm.webdav.running_desc": "WebDAV сървърът РАБОТИ на порт %{port}.\n\nУстройството е монтирано. Кликнете 'Спиране на сървъра' за демонтиране и спиране на сървъра.",
   "fm.webdav.start_desc": "Стартиране на локален WebDAV сървър на порт %{port}?%{creds}\n\nЩе монтираме устройството към вашата система:",
   "fm.webdav.start_server": "Стартиране на сървъра",
   "fm.webdav.stop_server": "Спиране на сървъра",
-  "fm.webdav.title": "WebDAV: %{name}"
+  "fm.webdav.title": "WebDAV: %{name}",
+  "fm.webdav.unmount_body": "Да се изключи ли „%{name}“? Още отворени файлове от този диск може да спрат да работят.",
+  "fm.webdav.unmount_btn": "Изключване",
+  "fm.webdav.unmount_title": "Да се изключи ли дискът?"
 }

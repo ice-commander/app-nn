@@ -7,6 +7,27 @@ mod backend;
 pub use backend::{dispatch_core, PanelBackend};
 
 pub enum ApiCmd {
+    #[cfg(feature = "nodeinnet")]
+    AccountStatus {
+        reply: oneshot::Sender<ApiResult<serde_json::Value>>,
+    },
+    #[cfg(feature = "nodeinnet")]
+    AddShare {
+        name: String,
+        path: String,
+        reply: oneshot::Sender<ApiResult<serde_json::Value>>,
+    },
+    #[cfg(feature = "nodeinnet")]
+    AccountLogin {
+        login: String,
+        password: String,
+        guest: bool,
+        reply: oneshot::Sender<ApiResult<()>>,
+    },
+    #[cfg(feature = "nodeinnet")]
+    AccountLogout {
+        reply: oneshot::Sender<ApiResult<()>>,
+    },
     OpenNative {
         side: PanelSide,
         path: String,
@@ -1760,6 +1781,10 @@ pub fn start_api_server(
                     .route("/api/connections/{name}", web::delete().to(delete_connection))
                     .route("/api/panel/{side}/refresh", web::post().to(refresh_panel))
                     .route("/api/settings", web::get().to(get_settings))
+                    .route("/api/account", web::get().to(account_status))
+                    .route("/api/p2p/shares", web::post().to(add_p2p_share))
+                    .route("/api/account/login", web::post().to(account_login))
+                    .route("/api/account/logout", web::post().to(account_logout))
                     .route("/api/settings", web::post().to(set_settings))
                     .route("/api/viewer/content", web::get().to(viewer_content))
                     .route("/api/connections/dialog", web::post().to(set_connections_dialog))
@@ -1883,4 +1908,106 @@ mod tests {
         assert_eq!(parse_byte_range("nonsense", 1000), None);
         assert_eq!(parse_byte_range("bytes=", 1000), None);
     }
+}
+
+#[cfg(feature = "nodeinnet")]
+#[derive(serde::Deserialize)]
+struct AccountLoginBody {
+    login: String,
+    password: String,
+    #[serde(default)]
+    guest: bool,
+}
+
+#[cfg(feature = "nodeinnet")]
+async fn account_login(
+    body: web::Json<AccountLoginBody>,
+    state: web::Data<ApiState>,
+) -> impl Responder {
+    let (reply_tx, reply_rx) = oneshot::channel();
+    let cmd = ApiCmd::AccountLogin {
+        login: body.login.clone(),
+        password: body.password.clone(),
+        guest: body.guest,
+        reply: reply_tx,
+    };
+    if state.tx.send(cmd).await.is_err() {
+        return HttpResponse::ServiceUnavailable().finish();
+    }
+    match reply_rx.await {
+        Ok(Ok(())) => HttpResponse::Ok().json(serde_json::json!({ "ok": true })),
+        Ok(Err(e)) => HttpResponse::BadRequest().json(serde_json::json!({ "error": e })),
+        Err(_) => HttpResponse::ServiceUnavailable().finish(),
+    }
+}
+
+#[cfg(feature = "nodeinnet")]
+async fn account_logout(state: web::Data<ApiState>) -> impl Responder {
+    let (reply_tx, reply_rx) = oneshot::channel();
+    if state.tx.send(ApiCmd::AccountLogout { reply: reply_tx }).await.is_err() {
+        return HttpResponse::ServiceUnavailable().finish();
+    }
+    match reply_rx.await {
+        Ok(Ok(())) => HttpResponse::Ok().json(serde_json::json!({ "ok": true })),
+        Ok(Err(e)) => HttpResponse::BadRequest().json(serde_json::json!({ "error": e })),
+        Err(_) => HttpResponse::ServiceUnavailable().finish(),
+    }
+}
+
+#[cfg(not(feature = "nodeinnet"))]
+async fn account_login() -> impl Responder {
+    HttpResponse::NotFound().json(serde_json::json!({ "error": "built without node.in.net" }))
+}
+
+#[cfg(not(feature = "nodeinnet"))]
+async fn account_logout() -> impl Responder {
+    HttpResponse::NotFound().json(serde_json::json!({ "error": "built without node.in.net" }))
+}
+
+#[cfg(feature = "nodeinnet")]
+async fn account_status(state: web::Data<ApiState>) -> impl Responder {
+    let (reply_tx, reply_rx) = oneshot::channel();
+    if state.tx.send(ApiCmd::AccountStatus { reply: reply_tx }).await.is_err() {
+        return HttpResponse::ServiceUnavailable().finish();
+    }
+    match reply_rx.await {
+        Ok(Ok(v)) => HttpResponse::Ok().json(v),
+        Ok(Err(e)) => HttpResponse::BadRequest().json(serde_json::json!({ "error": e })),
+        Err(_) => HttpResponse::ServiceUnavailable().finish(),
+    }
+}
+
+#[cfg(not(feature = "nodeinnet"))]
+async fn account_status() -> impl Responder {
+    HttpResponse::Ok().json(serde_json::json!({ "logged_in": false }))
+}
+
+#[cfg(feature = "nodeinnet")]
+#[derive(serde::Deserialize)]
+struct ShareBody {
+    name: String,
+    path: String,
+}
+
+#[cfg(feature = "nodeinnet")]
+async fn add_p2p_share(body: web::Json<ShareBody>, state: web::Data<ApiState>) -> impl Responder {
+    let (reply_tx, reply_rx) = oneshot::channel();
+    let cmd = ApiCmd::AddShare {
+        name: body.name.clone(),
+        path: body.path.clone(),
+        reply: reply_tx,
+    };
+    if state.tx.send(cmd).await.is_err() {
+        return HttpResponse::ServiceUnavailable().finish();
+    }
+    match reply_rx.await {
+        Ok(Ok(v)) => HttpResponse::Ok().json(v),
+        Ok(Err(e)) => HttpResponse::BadRequest().json(serde_json::json!({ "error": e })),
+        Err(_) => HttpResponse::ServiceUnavailable().finish(),
+    }
+}
+
+#[cfg(not(feature = "nodeinnet"))]
+async fn add_p2p_share() -> impl Responder {
+    HttpResponse::NotFound().json(serde_json::json!({ "error": "built without node.in.net" }))
 }

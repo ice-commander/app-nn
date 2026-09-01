@@ -1,0 +1,6 @@
+[submodule "submodules/p2p-common"]
+	path = submodules/p2p-common
+	url = https://github.com/node-in-net/p2p-common.git
+[submodule "submodules/p2p-functions"]
+	path = submodules/p2p-functions
+	url = https://github.com/node-in-net/p2p-functions.git

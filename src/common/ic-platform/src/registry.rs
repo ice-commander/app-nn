@@ -213,3 +213,36 @@ pub fn set_registry_value(
         Err(e) => Err(e.to_string()),
     }
 }
+
+#[cfg(target_os = "windows")]
+pub fn create_registry_key(parent_path: &str, key_name: &str) -> Result<(), String> {
+    use winreg::enums::*;
+    use winreg::RegKey;
+
+    let parts: Vec<&str> = parent_path.trim_matches('/').splitn(2, '/').collect();
+    if parts.is_empty() || parent_path == "/" {
+        return Err("Cannot create root key".to_string());
+    }
+
+    let root_str = parts[0].to_uppercase();
+    let key = match root_str.as_str() {
+        "HKLM" => RegKey::predef(HKEY_LOCAL_MACHINE),
+        "HKCU" => RegKey::predef(HKEY_CURRENT_USER),
+        "HKCR" => RegKey::predef(HKEY_CLASSES_ROOT),
+        "HKU" => RegKey::predef(HKEY_USERS),
+        "HKCC" => RegKey::predef(HKEY_CURRENT_CONFIG),
+        _ => RegKey::predef(HKEY_CURRENT_USER),
+    };
+    let rest = if parts.len() > 1 {
+        parts[1].replace("/", "\\")
+    } else {
+        String::new()
+    };
+    match key.open_subkey_with_flags(&rest, KEY_WRITE | KEY_READ) {
+        Ok(target_key) => match target_key.create_subkey(key_name) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e.to_string()),
+        },
+        Err(e) => Err(e.to_string()),
+    }
+}
