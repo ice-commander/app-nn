@@ -21,7 +21,7 @@ cp $CARGO_TARGET_DIR/release/nodeinnet-ice-commander ./bin/gtk-app/release/nodei
 
 cargo deb -p nodeinnet-ice-commander-gtk
 
-cp $CARGO_TARGET_DIR/debian/*.deb ./distr
+cp $CARGO_TARGET_DIR/debian/nodeinnet-ice-commander-gtk*.deb ./distr
 
 
 FILE=$(ls -t distr/*.deb | head -n 1)

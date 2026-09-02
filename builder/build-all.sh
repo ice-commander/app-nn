@@ -26,20 +26,9 @@ npm run build-web-app
 
 ./builder/osx.sh
 docker compose -f ./builder/ice-commander-builder.yml run --rm exe
-docker compose -f ./builder/ice-commander-builder.yml run --rm exe-webserver
-docker compose -f ./builder/ice-commander-builder.yml run --rm exe-console
-# Each distro builds the GTK app first, then the webserver and the console — both reuse the
-# shared CARGO_TARGET_DIR, so only the GTK-free crates relink.
 docker compose -f ./builder/ice-commander-builder.yml run --rm zst
-docker compose -f ./builder/ice-commander-builder.yml run --rm zst-webserver
-docker compose -f ./builder/ice-commander-builder.yml run --rm zst-console
 docker compose -f ./builder/ice-commander-builder.yml run --rm deb
-docker compose -f ./builder/ice-commander-builder.yml run --rm deb-webserver
-docker compose -f ./builder/ice-commander-builder.yml run --rm deb-console
 docker compose -f ./builder/ice-commander-builder.yml run --rm rpm
-docker compose -f ./builder/ice-commander-builder.yml run --rm rpm-webserver
-docker compose -f ./builder/ice-commander-builder.yml run --rm rpm-console
-
 
 
 echo ""
