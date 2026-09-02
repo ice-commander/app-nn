@@ -53,6 +53,7 @@ impl MainWindow {
         let active_dialog_graph = std::rc::Rc::new(std::cell::RefCell::new(
             None::<crate::netgraph::NetGraph>,
         ));
+        let clipboard = std::rc::Rc::new(fm_core::clipboard::Clipboard::new());
         let selector_updaters =
             std::rc::Rc::new(std::cell::RefCell::new(Vec::<std::rc::Rc<dyn Fn()>>::new()));
         let shift_held = std::rc::Rc::new(std::cell::Cell::new(false));
@@ -140,6 +141,7 @@ impl MainWindow {
             &my_info,
             &net_tx,
             online_nodes.clone(),
+            clipboard.clone(),
             shift_held.clone(),
             on_open_sysinfo.clone(),
             on_open_account.clone(),
@@ -148,6 +150,18 @@ impl MainWindow {
             term_out_left,
             term_out_right,
         );
+        {
+            let clip = clipboard.clone();
+            let li = left_info.clone();
+            let ri = right_info.clone();
+            clipboard.connect_changed(std::rc::Rc::new(move |n, side, cut| {
+                for r in li.all_routers().iter().chain(ri.all_routers().iter()) {
+                    r.set_clipboard_state(n, r.panel_id() == side, cut);
+                }
+            }));
+            let _ = &clip;
+        }
+
         root_vbox.append(&paned);
 
         if let Some((_tx, rx, _, _, _)) = api_channel {
@@ -333,6 +347,7 @@ impl MainWindow {
             on_expand.clone(),
             on_collapse.clone(),
             expanded_side.clone(),
+            clipboard.clone(),
         );
 
         let bottom_box = fbuttons::build_fbuttons(
@@ -441,6 +456,16 @@ impl MainWindow {
             }
             .star-inactive {
                 color: alpha(currentColor, 0.3);
+            }
+            .clip-badge {
+                background: @accent_bg_color;
+                color: @accent_fg_color;
+                border-radius: 999px;
+                font-size: 9px;
+                font-weight: bold;
+                padding: 0 4px;
+                margin: 2px;
+                min-width: 12px;
             }
             .destructive-hover-action {
                 transition: background-color 0.15s ease, color 0.15s ease;

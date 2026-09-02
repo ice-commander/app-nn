@@ -63,6 +63,7 @@ pub fn build_panel(
     net_tx: crate::core::NetCmdSender,
     online_nodes: std::rc::Rc<std::cell::RefCell<Vec<nodeinnet_p2p::NodeInfo>>>,
     my_device_id: String,
+    clipboard: std::rc::Rc<fm_core::clipboard::Clipboard>,
     shift_held: std::rc::Rc<std::cell::Cell<bool>>,
     audio_player: crate::player::AudioPlayer,
     on_open_sysinfo: std::rc::Rc<dyn Fn()>,
@@ -77,6 +78,7 @@ pub fn build_panel(
 
     let config_for_addtab = config.clone();
 
+    let clipboard_tabs = clipboard.clone();
     let nav_hook: std::rc::Rc<std::cell::RefCell<Option<std::rc::Rc<dyn Fn()>>>> =
         std::rc::Rc::new(std::cell::RefCell::new(None));
 
@@ -104,6 +106,7 @@ pub fn build_panel(
                 net_tx.clone(),
                 online_nodes.clone(),
                 my_device_id.clone(),
+                clipboard_tabs.clone(),
                 shift_held.clone(),
                 audio_player.clone(),
                 on_open_sysinfo.clone(),
@@ -323,8 +326,26 @@ pub fn build_panel(
         }
         {
             let info_for_nav = panel_info.clone();
-            *nav_hook.borrow_mut() =
-                Some(std::rc::Rc::new(move || crate::api::notify_side(side_str, &info_for_nav)));
+            let clip_nav = clipboard.clone();
+            *nav_hook.borrow_mut() = Some(std::rc::Rc::new(move || {
+                if clip_nav.count() > 0 {
+                    let live: Vec<_> = info_for_nav
+                        .all_routers()
+                        .iter()
+                        .flat_map(|r| {
+                            r.state
+                                .path
+                                .borrow()
+                                .levels()
+                                .iter()
+                                .map(|l| l.fs.clone())
+                                .collect::<Vec<_>>()
+                        })
+                        .collect();
+                    clip_nav.drop_if_unreachable(&live);
+                }
+                crate::api::notify_side(side_str, &info_for_nav)
+            }));
         }
     }
 
@@ -461,6 +482,7 @@ fn build_tab(
     net_tx: crate::core::NetCmdSender,
     online_nodes: std::rc::Rc<std::cell::RefCell<Vec<nodeinnet_p2p::NodeInfo>>>,
     my_device_id: String,
+    clipboard: std::rc::Rc<fm_core::clipboard::Clipboard>,
     shift_held: std::rc::Rc<std::cell::Cell<bool>>,
     audio_player: crate::player::AudioPlayer,
     _on_open_sysinfo: std::rc::Rc<dyn Fn()>,
@@ -782,6 +804,7 @@ fn build_tab(
         let audio_player = audio_player.clone();
         let drop_hook = drop_hook.clone();
         let config = config.clone();
+        let clipboard_out = clipboard.clone();
         gtk::glib::spawn_future_local(async move {
             use gtk_fm_ui::{FmPanelInput, FmPanelOutput};
             while let Some(out) = out_rx.recv().await {
@@ -902,6 +925,30 @@ fn build_tab(
                     }
                     #[cfg(not(feature = "nodeinnet"))]
                     FmPanelOutput::Mount => {}
+                    FmPanelOutput::Cut | FmPanelOutput::Copy => {
+                        let kind = if matches!(host, FmPanelOutput::Cut) {
+                            fm_core::clipboard::ClipKind::Cut
+                        } else {
+                            fm_core::clipboard::ClipKind::Copy
+                        };
+                        crate::clipboard_ops::take(&clipboard_out, &router, kind);
+                    }
+                    FmPanelOutput::ClipboardClear => clipboard_out.clear(),
+                    FmPanelOutput::Paste => {
+                        if let Some(win) = router.window() {
+                            crate::clipboard_ops::paste_into(&win, &clipboard_out, &router, None);
+                        }
+                    }
+                    FmPanelOutput::PasteInto(name) => {
+                        if let Some(win) = router.window() {
+                            crate::clipboard_ops::paste_into(
+                                &win,
+                                &clipboard_out,
+                                &router,
+                                Some(name),
+                            );
+                        }
+                    }
                     FmPanelOutput::Extract { archive_path } => {
                         let rel = router.state.resolve_relative(&archive_path);
                         match router.state.active_provider().extract_archive(rel).await {

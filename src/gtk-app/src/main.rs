@@ -12,6 +12,7 @@ mod account;
 mod core;
 mod netgraph;
 mod shares;
+mod clipboard_ops;
 mod connection_manager;
 mod device_name;
 mod drives;
