@@ -2,7 +2,7 @@
 !include "x64.nsh"
 
 Name "NodeInNet Ice Commander"
-OutFile "..\\..\\distr\\nodeinnet-ice-commander-0.7.121-1-win64.exe"
+OutFile "..\\..\\distr\\nodeinnet-ice-commander-0.7.122-1-win64.exe"
 InstallDir "$PROGRAMFILES64\NodeInNet Ice Commander"
 Target amd64-unicode
 
@@ -45,9 +45,15 @@ Section "Ice Commander (Required)" SecMain
     
     File "..\..\bin\distr\exe\target\x86_64-pc-windows-gnu\release\nodeinnet-ice-commander.exe"
     
-    File /r "..\..\artifacts\gtk4-win32-x64\*"
+    ; liblzo2-2.dll is excluded on purpose: it is GPL-2.0-or-later and reaches the bundle only
+    ; through libgtk-4 -> libcairo-script-interpreter, a debug path the application never uses.
+    ; fakelzo (see src/fakelzo/README.md) supplies the two symbols the interpreter imports instead.
+    ; Excluding it here — rather than overwriting it after install — keeps the GPL library out
+    ; of the installer archive entirely, which is what actually matters for distribution.
+    File /r /x liblzo2-2.dll "..\..\artifacts\gtk4-win32-x64\*"
+    File "..\..\bin\distr\fakelzo\liblzo2-2.dll"
 
-    ; The bundle ships LGPL (GTK stack) and GPL (libmpv/FFmpeg) libraries; their license
+    ; The bundle ships LGPL libraries (the GTK stack, libmpv and FFmpeg); their license
     ; texts and the source references must accompany it.
     SetOutPath "$INSTDIR\licenses"
     File "..\..\assets\licenses\*.txt"
@@ -62,7 +68,7 @@ Section "Ice Commander (Required)" SecMain
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NodeInNetIceCommander" "DisplayName" "NodeInNet Ice Commander"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NodeInNetIceCommander" "UninstallString" '"$INSTDIR\Uninstall.exe"'
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NodeInNetIceCommander" "DisplayIcon" '"$INSTDIR\nodeinnet-ice-commander.exe"'
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NodeInNetIceCommander" "DisplayVersion" "0.7.121"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NodeInNetIceCommander" "DisplayVersion" "0.7.122"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NodeInNetIceCommander" "Publisher" "NodeInNet"
 SectionEnd
 
