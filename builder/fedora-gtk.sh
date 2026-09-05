@@ -24,7 +24,7 @@ cd ./src/gtk-app
 cargo generate-rpm
 cd ../../
 
-cp $CARGO_TARGET_DIR/generate-rpm/*.rpm ./distr
+cp $CARGO_TARGET_DIR/generate-rpm/nodeinnet-ice-commander-gtk*.rpm ./distr
 
 
 FILE=$(ls -t distr/*.rpm | head -n 1)
