@@ -7,6 +7,18 @@ thread_local! {
         RefCell::new(HashMap::new());
 }
 
+thread_local! {
+    static PEER_TERMINALS: RefCell<HashMap<String, String>> = RefCell::new(HashMap::new());
+}
+
+pub fn set_peer_terminals(map: HashMap<String, String>) {
+    PEER_TERMINALS.with(|m| *m.borrow_mut() = map);
+}
+
+pub fn peer_terminal(peer_id: &str) -> Option<String> {
+    PEER_TERMINALS.with(|m| m.borrow().get(peer_id).cloned())
+}
+
 pub fn fire_download_progress(transfer_id: uuid::Uuid, bytes_read: u64) {
     P2P_DOWNLOAD_PROGRESS_CALLBACKS.with(|map| {
         if let Some(cb) = map.borrow().get(&transfer_id) {
@@ -152,6 +164,9 @@ impl RemoteFileSystemRpc {
 impl fm_core::rpc::FileSystemRpc for RemoteFileSystemRpc {
     fn as_any(&self) -> Option<&dyn std::any::Any> {
         Some(self)
+    }
+    fn supports_terminal(&self) -> bool {
+        peer_terminal(&self.peer_id).is_some()
     }
     fn content_wait(&self) -> fm_core::rpc::ContentWait {
         crate::net_content_wait()

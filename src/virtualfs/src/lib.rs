@@ -18,6 +18,9 @@ pub mod webdav_rpc;
 pub mod p2p_rpc;
 
 #[cfg(feature = "nodeinnet")]
+pub mod p2p_shell;
+
+#[cfg(feature = "nodeinnet")]
 pub(crate) fn mode_of(meta: &std::fs::Metadata) -> Option<u32> {
     #[cfg(unix)]
     {

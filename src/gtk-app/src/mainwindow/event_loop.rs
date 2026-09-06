@@ -36,6 +36,21 @@ pub(super) fn start_event_loop(
                 match event {
                     crate::core::UiEvent::UpdateNodes(nodes) => {
                         *online_nodes.borrow_mut() = nodes.clone();
+                        #[cfg(feature = "nodeinnet")]
+                        virtualfs::p2p_rpc::set_peer_terminals(
+                            nodes
+                                .iter()
+                                .filter_map(|n| {
+                                    n.resources
+                                        .iter()
+                                        .find(|r| {
+                                            r.resource_type == nodeinnet_p2p::ResourceType::Terminal
+                                                && r.is_active
+                                        })
+                                        .map(|r| (n.id.clone(), r.id.clone()))
+                                })
+                                .collect(),
+                        );
 
                         println!("============================================================");
                         println!("📡 [WEBSOCKET] Peer list update received (from signaling: {})", nodes.len());
@@ -151,6 +166,12 @@ pub(super) fn start_event_loop(
                             nodeinnet_p2p::P2pMessage::SetPermissionsResponse { request_id, .. } => Some(*request_id),
                             _ => None,
                         };
+
+                        #[cfg(feature = "nodeinnet")]
+                        if let nodeinnet_p2p::P2pMessage::TerminalOutput { resource_id, data } = &msg {
+                            virtualfs::p2p_shell::feed_output(resource_id, data.clone());
+                            continue;
+                        }
 
                         let mut forwarded_to_webdav = false;
                         if let Some(req_id) = request_id_opt {

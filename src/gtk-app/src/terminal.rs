@@ -28,7 +28,7 @@ pub struct TerminalView {
     session_factory: SessionFactorySlot,
 }
 
-type SessionFactory = Rc<dyn Fn() -> Result<PtySession, String>>;
+pub type SessionFactory = Rc<dyn Fn() -> Result<PtySession, String>>;
 type SessionFactorySlot = Rc<RefCell<Option<SessionFactory>>>;
 
 impl TerminalView {
@@ -211,12 +211,16 @@ impl TerminalView {
         }
     }
 
-    pub fn start_ssh_session(&self, target: fm_core::rpc::SshShellTarget) {
-        *self.session_factory.borrow_mut() = Some(Rc::new(move || {
-            Ok(virtualfs::ssh_shell::open_ssh_shell(target.clone(), 24, 80))
-        }));
+    pub fn start_session_with(&self, factory: SessionFactory) {
+        *self.session_factory.borrow_mut() = Some(factory);
         (self.start)();
         let _ = self.sender.send(TerminalInput::GrabFocus);
+    }
+
+    pub fn start_ssh_session(&self, target: fm_core::rpc::SshShellTarget) {
+        self.start_session_with(Rc::new(move || {
+            Ok(virtualfs::ssh_shell::open_ssh_shell(target.clone(), 24, 80))
+        }));
     }
 
     pub fn stop_session(&self) {

@@ -321,6 +321,7 @@ pub fn build_panel(
             panel_info
                 .tab_view
                 .connect_selected_page_notify(move |_| {
+                    info_for_switch.refresh_terminal_button();
                     crate::api::notify_side(side_str, &info_for_switch);
                 });
         }
@@ -344,11 +345,13 @@ pub fn build_panel(
                         .collect();
                     clip_nav.drop_if_unreachable(&live);
                 }
+                info_for_nav.refresh_terminal_button();
                 crate::api::notify_side(side_str, &info_for_nav)
             }));
         }
     }
 
+    panel_info.refresh_terminal_button();
     panel_info
 }
 
@@ -397,6 +400,11 @@ impl PanelInfo {
     pub fn active_player_view(&self) -> crate::player_ui::AudioPlayerView {
         self.with_active(|t| t.player_view.clone())
     }
+    pub fn refresh_terminal_button(&self) {
+        let supported = self.active_router().state.active_provider().supports_terminal();
+        self.active_term_btn().set_sensitive(supported);
+    }
+
     pub fn active_term_btn(&self) -> gtk::Button {
         self.with_active(|t| t.term_btn.clone())
     }
@@ -1137,6 +1145,9 @@ fn build_bottom_pane(
             if term_view.container.is_visible() {
                 return;
             }
+            if !router.state.active_provider().supports_terminal() {
+                return;
+            }
             expand_btn.set_visible(true);
             bottom_box.set_visible(true);
             term_view.container.set_visible(true);
@@ -1155,7 +1166,13 @@ fn build_bottom_pane(
                 path
             };
             let provider = router.state.active_provider();
-            if let Some(target) = provider.get_ssh_shell_target(&cwd) {
+            #[cfg(feature = "nodeinnet")]
+            let p2p = crate::p2p_terminal::session_factory(&provider);
+            #[cfg(not(feature = "nodeinnet"))]
+            let p2p: Option<crate::terminal::SessionFactory> = None;
+            if let Some(factory) = p2p {
+                term_view.start_session_with(factory);
+            } else if let Some(target) = provider.get_ssh_shell_target(&cwd) {
                 term_view.start_ssh_session(target);
             } else if let Some(cmd_args) = provider.get_ssh_connection_command(&cwd) {
                 term_view.start_command_session(cmd_args, None);

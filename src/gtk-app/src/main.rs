@@ -11,6 +11,8 @@ pub use common::AppError;
 mod account;
 mod core;
 mod netgraph;
+#[cfg(feature = "nodeinnet")]
+mod p2p_terminal;
 mod shares;
 mod clipboard_ops;
 mod connection_manager;
