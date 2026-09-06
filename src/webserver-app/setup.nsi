@@ -2,7 +2,7 @@
 !include "x64.nsh"
 
 Name "Ice Commander Web Server"
-OutFile "..\\..\\distr\\ice-commander-webserver-0.7.92-1-win64.exe"
+OutFile "..\\..\\distr\\ice-commander-webserver-0.7.124-1-win64.exe"
 InstallDir "$PROGRAMFILES64\Ice Commander Web Server"
 Target amd64-unicode
 
@@ -25,6 +25,19 @@ RequestExecutionLevel admin
 
 !insertmacro MUI_LANGUAGE "English"
 !insertmacro MUI_LANGUAGE "Russian"
+!insertmacro MUI_LANGUAGE "Polish"
+!insertmacro MUI_LANGUAGE "Czech"
+!insertmacro MUI_LANGUAGE "Slovak"
+!insertmacro MUI_LANGUAGE "German"
+!insertmacro MUI_LANGUAGE "Spanish"
+!insertmacro MUI_LANGUAGE "Ukrainian"
+!insertmacro MUI_LANGUAGE "Italian"
+!insertmacro MUI_LANGUAGE "French"
+!insertmacro MUI_LANGUAGE "Romanian"
+!insertmacro MUI_LANGUAGE "Hungarian"
+!insertmacro MUI_LANGUAGE "Belarusian"
+!insertmacro MUI_LANGUAGE "Bulgarian"
+!insertmacro MUI_LANGUAGE "Serbian"
 
 Function .onInit
     ${If} ${RunningX64}
@@ -37,10 +50,9 @@ Function .onInit
 FunctionEnd
 
 Section "Ice Commander Web Server (Required)" SecMain
-    SectionIn RO ; Read Only - cannot be deselected
+    SectionIn RO
     SetOutPath "$INSTDIR"
 
-    ; A single GTK-free binary — no gtk4-win32-x64 DLLs to bundle.
     File "..\..\bin\distr\exe\target\x86_64-pc-windows-gnu\release\ice-webserver.exe"
 
     CreateDirectory "$SMPROGRAMS\Ice Commander Web Server"
@@ -52,7 +64,7 @@ Section "Ice Commander Web Server (Required)" SecMain
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\IceCommanderWebServer" "DisplayName" "Ice Commander Web Server"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\IceCommanderWebServer" "UninstallString" '"$INSTDIR\Uninstall.exe"'
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\IceCommanderWebServer" "DisplayIcon" '"$INSTDIR\ice-webserver.exe"'
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\IceCommanderWebServer" "DisplayVersion" "0.7.92"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\IceCommanderWebServer" "DisplayVersion" "0.7.124"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\IceCommanderWebServer" "Publisher" "Ice Commander Project"
 SectionEnd
 

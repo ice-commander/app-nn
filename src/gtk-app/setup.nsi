@@ -2,7 +2,7 @@
 !include "x64.nsh"
 
 Name "Ice Commander"
-OutFile "..\\..\\distr\\ice-commander-0.7.122-1-win64.exe"
+OutFile "..\\..\\distr\\ice-commander-0.7.124-1-win64.exe"
 InstallDir "$PROGRAMFILES64\Ice Commander"
 Target amd64-unicode
 
@@ -28,6 +28,19 @@ RequestExecutionLevel admin
 
 !insertmacro MUI_LANGUAGE "English"
 !insertmacro MUI_LANGUAGE "Russian"
+!insertmacro MUI_LANGUAGE "Polish"
+!insertmacro MUI_LANGUAGE "Czech"
+!insertmacro MUI_LANGUAGE "Slovak"
+!insertmacro MUI_LANGUAGE "German"
+!insertmacro MUI_LANGUAGE "Spanish"
+!insertmacro MUI_LANGUAGE "Ukrainian"
+!insertmacro MUI_LANGUAGE "Italian"
+!insertmacro MUI_LANGUAGE "French"
+!insertmacro MUI_LANGUAGE "Romanian"
+!insertmacro MUI_LANGUAGE "Hungarian"
+!insertmacro MUI_LANGUAGE "Belarusian"
+!insertmacro MUI_LANGUAGE "Bulgarian"
+!insertmacro MUI_LANGUAGE "Serbian"
 
 Function .onInit
     ${If} ${RunningX64}
@@ -40,21 +53,14 @@ Function .onInit
 FunctionEnd
 
 Section "Ice Commander (Required)" SecMain
-    SectionIn RO ; Read Only - cannot be deselected
+    SectionIn RO
     SetOutPath "$INSTDIR"
     
     File "..\..\bin\distr\exe\target\x86_64-pc-windows-gnu\release\ice-commander.exe"
     
-    ; liblzo2-2.dll is excluded on purpose: it is GPL-2.0-or-later and reaches the bundle only
-    ; through libgtk-4 -> libcairo-script-interpreter, a debug path the application never uses.
-    ; fakelzo (see src/fakelzo/README.md) supplies the two symbols the interpreter imports instead.
-    ; Excluding it here — rather than overwriting it after install — keeps the GPL library out
-    ; of the installer archive entirely, which is what actually matters for distribution.
     File /r /x liblzo2-2.dll "..\..\artifacts\gtk4-win32-x64\*"
     File "..\..\bin\distr\fakelzo\liblzo2-2.dll"
 
-    ; The bundle ships LGPL libraries (the GTK stack, libmpv and FFmpeg); their license
-    ; texts and the source references must accompany it.
     SetOutPath "$INSTDIR\licenses"
     File "..\..\assets\licenses\*.txt"
     SetOutPath "$INSTDIR"
@@ -68,7 +74,7 @@ Section "Ice Commander (Required)" SecMain
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\IceCommander" "DisplayName" "Ice Commander"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\IceCommander" "UninstallString" '"$INSTDIR\Uninstall.exe"'
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\IceCommander" "DisplayIcon" '"$INSTDIR\ice-commander.exe"'
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\IceCommander" "DisplayVersion" "0.7.122"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\IceCommander" "DisplayVersion" "0.7.124"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\IceCommander" "Publisher" "Ice Commander Project"
 SectionEnd
 
