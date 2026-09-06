@@ -25,6 +25,6 @@ cp $CARGO_TARGET_DIR/debian/nodeinnet-ice-commander-gtk*.deb ./distr
 
 
 FILE=$(ls -t distr/*.deb | head -n 1)
-echo "$(md5sum "$FILE" | awk '{print $1}') Debian gtk4" >> distr/md5sums.txt
+echo "$(md5sum "$FILE" | awk '{print $1}') [GTK4-DEB] $(basename "$FILE")" >> distr/md5sums.txt
 
 exit 0

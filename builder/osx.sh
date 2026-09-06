@@ -104,4 +104,4 @@ DMG_NAME="nodeinnet-ice-commander-${VERSION}-1-mac.dmg"
 mv "$DMG_OUTPUT" ./distr/$DMG_NAME
 
 
-echo "$(md5 -q distr/$DMG_NAME) macOS gtk4" >> distr/md5sums.txt
+echo "$(md5 -q distr/$DMG_NAME) [GTK4-DMG] $DMG_NAME" >> distr/md5sums.txt

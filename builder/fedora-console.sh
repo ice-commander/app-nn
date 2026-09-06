@@ -27,6 +27,6 @@ cp $CARGO_TARGET_DIR/generate-rpm/*.rpm ./distr
 
 
 FILE=$(ls -t distr/nodeinnet-ice-commander-console*.rpm | head -n 1)
-echo "$(md5sum "$FILE" | awk '{print $1}') Fedora console" >> distr/md5sums.txt
+echo "$(md5sum "$FILE" | awk '{print $1}') [CONSOLE-RPM] $(basename "$FILE")" >> distr/md5sums.txt
 
 exit 0

@@ -19,7 +19,7 @@ makensis src/console-app/setup.nsi
 
 VERSION=$(node -p "require('./package.json').version")
 
-echo "$(md5sum distr/nodeinnet-ice-commander-console-${VERSION}-1-win64.exe | awk '{print $1}') Windows console" >> distr/md5sums.txt
+echo "$(md5sum distr/nodeinnet-ice-commander-console-${VERSION}-1-win64.exe | awk '{print $1}') [CONSOLE-EXE] nodeinnet-ice-commander-console-${VERSION}-1-win64.exe" >> distr/md5sums.txt
 
 echo "--- Done! ---"
 exit 0
