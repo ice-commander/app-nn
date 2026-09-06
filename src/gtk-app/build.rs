@@ -2,6 +2,12 @@ fn main() {
     println!("cargo:rerun-if-changed=assets/resources.gresource.xml");
     println!("cargo:rerun-if-changed=assets/webui/bundle.js");
     println!("cargo:rerun-if-changed=assets/webui/style.css");
+
+    for asset in ["assets/webui/bundle.js", "assets/webui/style.css"] {
+        if !std::path::Path::new(asset).exists() {
+            panic!("{asset} is generated and missing: run `npm run build-web-app` first");
+        }
+    }
     glib_build_tools::compile_resources(
         &["assets"],
         "assets/resources.gresource.xml",
