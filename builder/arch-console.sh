@@ -43,4 +43,4 @@ cd /home/builder/workdir
 
 
 FILE=$(ls -t distr/ice-commander-console*.pkg.tar.zst | head -n 1)
-echo "$(md5sum "$FILE" | awk '{print $1}') Arch Linux console" >> distr/md5sums.txt
+echo "$(md5sum "$FILE" | awk '{print $1}') [CONSOLE-ZST] $(basename "$FILE")" >> distr/md5sums.txt

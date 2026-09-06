@@ -26,6 +26,6 @@ cp $CARGO_TARGET_DIR/debian/ice-commander-console*.deb ./distr
 
 
 FILE=$(ls -t distr/ice-commander-console*.deb | head -n 1)
-echo "$(md5sum "$FILE" | awk '{print $1}') Debian console" >> distr/md5sums.txt
+echo "$(md5sum "$FILE" | awk '{print $1}') [CONSOLE-DEB] $(basename "$FILE")" >> distr/md5sums.txt
 
 exit 0
