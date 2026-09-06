@@ -5,9 +5,9 @@ use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
 
-const DEFAULT_UPDATE_SERVER: &str = "https://www.icecommander.com";
-const APP_NAME: &str = "Ice Commander";
-const FILE_PREFIX: &str = "icecommander";
+const DEFAULT_UPDATE_SERVER: &str = "https://nodeinnet.icecommander.com";
+const APP_NAME: &str = "NodeInNet Ice Commander";
+const FILE_PREFIX: &str = "nodeinnet-icecommander";
 
 fn update_server() -> String {
     let raw = std::env::var("IC_UPDATE_SERVER").unwrap_or_default();
