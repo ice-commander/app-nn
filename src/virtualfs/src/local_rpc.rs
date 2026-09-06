@@ -126,6 +126,10 @@ impl LocalFileSystemRpc {
 
 #[async_trait::async_trait(?Send)]
 impl fm_core::rpc::FileSystemRpc for LocalFileSystemRpc {
+    fn supports_terminal(&self) -> bool {
+        true
+    }
+
     fn as_any(&self) -> Option<&dyn std::any::Any> {
         Some(self)
     }

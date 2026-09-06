@@ -186,6 +186,10 @@ impl FileSystemRpc for RoutingProvider {
     fn get_ssh_shell_target(&self, remote_path: &str) -> Option<fm_core::rpc::SshShellTarget> {
         self.provider.get_ssh_shell_target(remote_path)
     }
+
+    fn supports_terminal(&self) -> bool {
+        self.provider.supports_terminal()
+    }
 }
 
 fn push_listing(state: &Rc<RouterState>, sender: &relm4::Sender<FmPanelInput>) {

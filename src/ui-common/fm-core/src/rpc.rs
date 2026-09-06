@@ -192,6 +192,10 @@ pub trait FileSystemRpc {
         None
     }
 
+    fn supports_terminal(&self) -> bool {
+        false
+    }
+
     fn content_wait(&self) -> ContentWait {
         ContentWait::Infinite
     }
@@ -210,6 +214,11 @@ mod tests {
         TestRpc
     }
 
+
+    #[test]
+    fn a_filesystem_carries_no_terminal_unless_it_says_so() {
+        assert!(!rpc().supports_terminal());
+    }
 
     #[test]
     fn empty_path_returns_no_segments() {

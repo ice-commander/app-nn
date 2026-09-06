@@ -309,6 +309,7 @@ pub fn build_panel(
             panel_info
                 .tab_view
                 .connect_selected_page_notify(move |_| {
+                    info_for_switch.refresh_terminal_button();
                     crate::api::notify_side(side_str, &info_for_switch);
                 });
         }
@@ -332,11 +333,13 @@ pub fn build_panel(
                         .collect();
                     clip_nav.drop_if_unreachable(&live);
                 }
+                info_for_nav.refresh_terminal_button();
                 crate::api::notify_side(side_str, &info_for_nav)
             }));
         }
     }
 
+    panel_info.refresh_terminal_button();
     panel_info
 }
 
@@ -385,6 +388,11 @@ impl PanelInfo {
     pub fn active_player_view(&self) -> crate::player_ui::AudioPlayerView {
         self.with_active(|t| t.player_view.clone())
     }
+    pub fn refresh_terminal_button(&self) {
+        let supported = self.active_router().state.active_provider().supports_terminal();
+        self.active_term_btn().set_sensitive(supported);
+    }
+
     pub fn active_term_btn(&self) -> gtk::Button {
         self.with_active(|t| t.term_btn.clone())
     }
@@ -1083,6 +1091,9 @@ fn build_bottom_pane(
         let router = router.clone();
         std::rc::Rc::new(move || {
             if term_view.container.is_visible() {
+                return;
+            }
+            if !router.state.active_provider().supports_terminal() {
                 return;
             }
             expand_btn.set_visible(true);
