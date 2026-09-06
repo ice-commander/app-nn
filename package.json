@@ -1,11 +1,11 @@
 {
-	"name": "ice-commander",
-	"description": "Ice Commander - Dual-Pane File Manager",
-	"version": "0.7.123",
+	"name": "nodeinnet-ice-commander",
+	"description": "NodeInNet Ice Commander - Dual-Pane File Manager",
+	"version": "0.7.124",
 	"private": true,
 	"license": "MIT",
 	"author": "Igor Savchenko",
-	"homepage": "https://icecommander.com/",
+	"homepage": "https://nodeinnet.icecommander.com/",
 	"scripts": {
 		"build-gtk": "cargo build -p nodeinnet-ice-commander-gtk --release --target-dir ./bin/gtk-app",
 		"run-app": "cargo run -p nodeinnet-ice-commander-gtk --release | cat",
