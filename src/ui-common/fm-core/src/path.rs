@@ -80,6 +80,27 @@ mod tests {
     }
 
     #[test]
+    fn scripts_beyond_latin_survive_joining_and_splitting() {
+        for (label, names, joined) in [
+            ("ukrainian", vec!["дім", "мої файли", "звіт.txt"], "/дім/мої файли/звіт.txt"),
+            ("chinese", vec!["家", "我的文件", "报告.txt"], "/家/我的文件/报告.txt"),
+            ("arabic", vec!["منزل", "ملفاتي", "تقرير.txt"], "/منزل/ملفاتي/تقرير.txt"),
+            ("greek", vec!["σπίτι", "τα αρχεία μου"], "/σπίτι/τα αρχεία μου"),
+            ("emoji", vec!["🎧 music", "track 1.mp3"], "/🎧 music/track 1.mp3"),
+        ] {
+            for windows in [true, false] {
+                assert_eq!(join_with(&names, windows), joined, "{label}");
+                assert_eq!(split_joined(joined), names, "{label}");
+                assert_eq!(
+                    join_with(&split_joined(joined), windows),
+                    joined,
+                    "{label} round trip"
+                );
+            }
+        }
+    }
+
+    #[test]
     fn a_drive_letter_roots_the_path_only_on_windows() {
         assert_eq!(join_with(&["C:"], true), "C:/");
         assert_eq!(join_with(&["C:", "Users", "ice"], true), "C:/Users/ice");

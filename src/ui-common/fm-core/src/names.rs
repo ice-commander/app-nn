@@ -35,6 +35,30 @@ mod tests {
     use super::*;
 
     #[test]
+    fn a_name_in_any_script_splits_at_its_last_dot() {
+        for (name, stem, ext) in [
+            ("звіт.txt", "звіт", ".txt"),
+            ("报告.txt", "报告", ".txt"),
+            ("تقرير.txt", "تقرير", ".txt"),
+            ("σπίτι.tar.gz", "σπίτι.tar", ".gz"),
+            ("🎧.mp3", "🎧", ".mp3"),
+            ("файл без розширення", "файл без розширення", ""),
+            (".прихований", ".прихований", ""),
+        ] {
+            assert_eq!(split_stem_ext(name, false), (stem, ext), "{name}");
+        }
+    }
+
+    #[test]
+    fn a_copy_of_a_non_latin_file_keeps_its_extension() {
+        let taken = vec!["تقرير copy.txt".to_string()];
+        let made = first_free("تقرير.txt", false, &taken, |stem, ext, n| {
+            if n == 1 { format!("{stem} copy{ext}") } else { format!("{stem} copy {n}{ext}") }
+        });
+        assert_eq!(made, "تقرير copy 2.txt");
+    }
+
+    #[test]
     fn a_directory_never_splits_at_a_dot() {
         assert_eq!(split_stem_ext("backup.2024", true), ("backup.2024", ""));
         assert_eq!(split_stem_ext("backup.2024", false), ("backup", ".2024"));
