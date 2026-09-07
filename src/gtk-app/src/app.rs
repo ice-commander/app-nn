@@ -68,25 +68,10 @@ impl Application {
 
         #[cfg(feature = "nodeinnet")]
         {
-            let mut priv_val = config.get::<String>("app.private_key_b64").unwrap_or_default();
-            let mut pub_val = config.get::<String>("app.public_key_b64").unwrap_or_default();
-            if priv_val.is_empty() || pub_val.is_empty() {
-                let (new_priv, new_pub) = nodeinnet_p2p::generate_ed25519_keypair();
-                config.set("app.private_key_b64", &new_priv);
-                config.set("app.public_key_b64", &new_pub);
-                priv_val = new_priv;
-                pub_val = new_pub;
-                needs_save = true;
-            }
-            priv_key_str = priv_val;
-            pub_key_str = pub_val;
-        }
-
-        #[cfg(feature = "nodeinnet")]
-        if let Some(ep) = config.get::<String>("net.api_endpoint") {
-            if !ep.is_empty() {
-                nodeinnet_p2p::set_api_base(&ep);
-            }
+            let identity = p2p_runtime::boot::identity(&config);
+            priv_key_str = identity.private_key;
+            pub_key_str = identity.public_key;
+            p2p_runtime::boot::apply_api_endpoint(&config);
         }
 
         crate::logging::apply(&config);
@@ -132,7 +117,7 @@ impl Application {
         }
 
         #[cfg(feature = "nodeinnet")]
-        if config.get::<bool>("ui.p2p_enabled").unwrap_or(true) {
+        if p2p_runtime::boot::enabled(&config) {
             client_core::network::start_network_thread(
                 net_rx,
                 net_tx_bg,

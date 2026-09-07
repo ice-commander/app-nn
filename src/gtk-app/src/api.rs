@@ -113,6 +113,13 @@ pub struct GtkBackend {
 }
 
 impl GtkBackend {
+    fn ctx(&self) -> p2p_sources::P2pContext {
+        p2p_sources::P2pContext::new(
+            self.config.clone(),
+            self.my_info.id.clone(),
+            self.online_nodes.clone(),
+        )
+    }
     fn router(&self, side: PanelSide) -> std::rc::Rc<panel_router::PanelRouter> {
         match side {
             PanelSide::Left => self.left.active_router(),
@@ -277,7 +284,7 @@ impl PanelBackend for GtkBackend {
     }
 
     fn get_drives(&self) -> Vec<ApiDrive> {
-        let all = crate::drives::get_all_app_drives(&self.config, &self.online_nodes.borrow(), None);
+        let all = crate::drives::get_all_app_drives(&self.ctx(), None);
         all.iter()
             .map(|d| {
                 let (kind, path) = match &d.item {
@@ -307,7 +314,7 @@ impl PanelBackend for GtkBackend {
     }
     async fn activate_source(&self, side: PanelSide, key: String) -> ApiResult<()> {
         let router = self.router(side);
-        let all = crate::drives::get_all_app_drives(&self.config, &self.online_nodes.borrow(), None);
+        let all = crate::drives::get_all_app_drives(&self.ctx(), None);
         match all.iter().find(|d| d.key == key) {
             Some(d) => match crate::drives::activate_drive_item(&d.item, &router, &self.net_tx) {
                 crate::drives::DriveActivation::Shown => {

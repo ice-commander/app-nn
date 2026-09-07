@@ -1,0 +1,21 @@
+[package]
+name = "p2p-runtime"
+version = "0.1.0"
+edition = "2021"
+description = "Routing rules for inbound peer traffic, shared by every front end"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[dependencies]
+nodeinnet-p2p = { workspace = true }
+client-core = { workspace = true }
+client-config = { workspace = true, features = ["nodeinnet"] }
+tokio = { workspace = true }
+ic-model = { workspace = true }
+ic-platform = { workspace = true }
+hostname = "0.4"
+p2p-node = { workspace = true }
+async-trait = "0.1"
+uuid = { version = "1", features = ["v4", "serde"] }
+virtualfs = { workspace = true, features = ["nodeinnet"] }
+web-davserver = { workspace = true }

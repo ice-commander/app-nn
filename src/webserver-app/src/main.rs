@@ -13,6 +13,7 @@ use panel_server::{
 };
 use tokio::sync::{broadcast, mpsc};
 
+
 fn side_str(side: PanelSide) -> &'static str {
     match side {
         PanelSide::Left => "left",
@@ -94,6 +95,8 @@ struct ConsoleBackend {
     left: Rc<RouterState>,
     right: Rc<RouterState>,
     config: client_config::AppConfig,
+    #[cfg(feature = "nodeinnet")]
+    p2p: Option<p2p_runtime::client::P2p>,
 }
 
 fn seal_api_conn(c: &mut ApiConnection) {
@@ -114,6 +117,31 @@ fn open_api_conn(mut c: ApiConnection) -> ApiConnection {
 }
 
 impl ConsoleBackend {
+    #[cfg(feature = "nodeinnet")]
+    async fn connect_peer(&self, side: PanelSide, target: &str) -> ApiResult<()> {
+        let Some(p2p) = &self.p2p else {
+            return Err("peer networking is disabled".to_string());
+        };
+        let (peer_id, resource_id) = match target.split_once('@') {
+            Some((peer, resource)) => (peer.to_string(), resource.to_string()),
+            None => return Err(format!("peer {target} shares no filesystem")),
+        };
+
+        let provider: Rc<dyn FileSystemRpc> = Rc::new(virtualfs::p2p_rpc::RemoteFileSystemRpc {
+            net_tx: p2p.net_tx.clone(),
+            resource_id,
+            peer_id: peer_id.clone(),
+        });
+        let _ = p2p.net_tx.try_send(client_core::NetCmd::Call(peer_id));
+
+        let core = self.core(side);
+        core.set_active_provider(provider.clone(), String::new());
+        core.showing_selector.set(false);
+        *core.path.borrow_mut() =
+            panel_core::nav::NavPath::from_levels(Vec::new(), provider);
+        core.list_active().await.map_err(|e| e.to_string())
+    }
+
     fn core(&self, side: PanelSide) -> &Rc<RouterState> {
         match side {
             PanelSide::Left => &self.left,
@@ -376,6 +404,26 @@ impl PanelBackend for ConsoleBackend {
                 is_online: true,
             });
         }
+        #[cfg(feature = "nodeinnet")]
+        if let Some(p2p) = &self.p2p {
+            let ctx = p2p_sources::P2pContext::new(
+                self.config.clone(),
+                p2p.my_id.clone(),
+                p2p.online_nodes.clone(),
+            );
+            for source in p2p_sources::peer_sources(&ctx, None, &[]) {
+                drives.push(ApiDrive {
+                    name: source.name,
+                    key: source.key,
+                    path: String::new(),
+                    icon: "connect.svg".to_string(),
+                    kind: "peer".to_string(),
+                    subtitle: source.subtitle,
+                    is_favorite: source.is_favorite,
+                    is_online: source.is_online,
+                });
+            }
+        }
         drives
     }
     async fn activate_source(&self, side: PanelSide, key: String) -> ApiResult<()> {
@@ -384,6 +432,10 @@ impl PanelBackend for ConsoleBackend {
                 Some(conn) => self.connect_provider(side, &conn).await,
                 None => Err(format!("no saved connection named {name:?}")),
             };
+        }
+        #[cfg(feature = "nodeinnet")]
+        if let Some(rest) = key.strip_prefix("p2p://") {
+            return self.connect_peer(side, rest).await;
         }
         let core = self.core(side);
         let path = match key.as_str() {
@@ -606,9 +658,22 @@ impl TerminalHub {
         }
         let core = self.core(side);
         let cwd = core.path.borrow().active().relative_path.clone();
-        let spawned = match core.active_provider().get_ssh_connection_command(&cwd) {
-            Some(args) => spawn_pty_command(args, None),
-            None => spawn_pty_session(Some(cwd)),
+        let provider = core.active_provider();
+
+        #[cfg(feature = "nodeinnet")]
+        let peer_shell = provider
+            .as_any()
+            .and_then(|any| any.downcast_ref::<virtualfs::p2p_rpc::RemoteFileSystemRpc>())
+            .and_then(|rpc| p2p_runtime::peer_shell(&rpc.peer_id, rpc.net_tx.clone(), 24, 80));
+        #[cfg(not(feature = "nodeinnet"))]
+        let peer_shell: Option<PtySession> = None;
+
+        let spawned = match peer_shell {
+            Some(session) => Ok(session),
+            None => match provider.get_ssh_connection_command(&cwd) {
+                Some(args) => spawn_pty_command(args, None),
+                None => spawn_pty_session(Some(cwd)),
+            },
         };
         match spawned {
             Ok(PtySession { input_tx, mut output_rx, resize_tx }) => {
@@ -678,7 +743,24 @@ async fn main() {
     let _ = left.list_active().await;
     let _ = right.list_active().await;
 
-    let backend = Rc::new(ConsoleBackend { left, right, config: config.clone() });
+    #[cfg(feature = "nodeinnet")]
+    let started = p2p_runtime::client::start(
+        &config,
+        &p2p_runtime::boot::device(&config, "webserver", env!("CARGO_PKG_VERSION"), "server"),
+    );
+    #[cfg(feature = "nodeinnet")]
+    let (p2p_handle, p2p_events) = match started {
+        Some((handle, events)) => (Some(handle), Some(events)),
+        None => (None, None),
+    };
+
+    let backend = Rc::new(ConsoleBackend {
+        left,
+        right,
+        config: config.clone(),
+        #[cfg(feature = "nodeinnet")]
+        p2p: p2p_handle.clone(),
+    });
     let terminals = Rc::new(TerminalHub {
         left_in: Rc::new(RefCell::new(None)),
         right_in: Rc::new(RefCell::new(None)),
@@ -693,6 +775,20 @@ async fn main() {
     let local = tokio::task::LocalSet::new();
     local
         .run_until(async move {
+            #[cfg(feature = "nodeinnet")]
+            if let (Some(handle), Some(events)) = (p2p_handle, p2p_events) {
+                let signing_in = p2p_runtime::client::sign_in(
+                    config.clone(),
+                    handle.node_info.clone(),
+                    handle.net_tx.clone(),
+                );
+                tokio::task::spawn_local(async move {
+                    if let Err(e) = signing_in.await {
+                        eprintln!("[p2p] {e}");
+                    }
+                });
+                tokio::task::spawn_local(p2p_runtime::client::pump(handle, events));
+            }
             while let Some(cmd) = rx.recv().await {
                 let backend = backend.clone();
                 let terminals = terminals.clone();

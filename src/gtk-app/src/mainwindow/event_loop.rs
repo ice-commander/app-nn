@@ -37,20 +37,7 @@ pub(super) fn start_event_loop(
                     crate::core::UiEvent::UpdateNodes(nodes) => {
                         *online_nodes.borrow_mut() = nodes.clone();
                         #[cfg(feature = "nodeinnet")]
-                        virtualfs::p2p_rpc::set_peer_terminals(
-                            nodes
-                                .iter()
-                                .filter_map(|n| {
-                                    n.resources
-                                        .iter()
-                                        .find(|r| {
-                                            r.resource_type == nodeinnet_p2p::ResourceType::Terminal
-                                                && r.is_active
-                                        })
-                                        .map(|r| (n.id.clone(), r.id.clone()))
-                                })
-                                .collect(),
-                        );
+                        p2p_runtime::on_nodes(&nodes);
 
                         println!("============================================================");
                         println!("📡 [WEBSOCKET] Peer list update received (from signaling: {})", nodes.len());
@@ -153,47 +140,14 @@ pub(super) fn start_event_loop(
                     }
 
                     crate::core::UiEvent::P2pMessageReceived(msg) => {
-                        let request_id_opt = match &msg {
-                            nodeinnet_p2p::P2pMessage::EntriesResponse { request_id, .. } => Some(*request_id),
-                            nodeinnet_p2p::P2pMessage::MetadataResponse { request_id, .. } => Some(*request_id),
-                            nodeinnet_p2p::P2pMessage::FileTransferComplete { transfer_id, .. } => Some(*transfer_id),
-                            nodeinnet_p2p::P2pMessage::FileTransferResponse { transfer_id, .. } => {
-                                Some(*transfer_id)
-                            }
-                            nodeinnet_p2p::P2pMessage::CreateDirectoryResponse { request_id, .. } => Some(*request_id),
-                            nodeinnet_p2p::P2pMessage::DeleteEntryResponse { request_id, .. } => Some(*request_id),
-                            nodeinnet_p2p::P2pMessage::RenameEntryResponse { request_id, .. } => Some(*request_id),
-                            nodeinnet_p2p::P2pMessage::SetPermissionsResponse { request_id, .. } => Some(*request_id),
-                            _ => None,
-                        };
-
                         #[cfg(feature = "nodeinnet")]
-                        if let nodeinnet_p2p::P2pMessage::TerminalOutput { resource_id, data } = &msg {
-                            virtualfs::p2p_shell::feed_output(resource_id, data.clone());
-                            continue;
-                        }
-
-                        let mut forwarded_to_webdav = false;
-                        if let Some(req_id) = request_id_opt {
-                            let sender_opt = {
-                                let pending_arc = web_davserver::get_pending_requests();
-                                let pending = pending_arc.lock().unwrap_or_else(|e| e.into_inner());
-                                pending.get(&req_id).cloned()
-                            };
-                            if let Some(sender) = sender_opt {
-                                let _ = sender.send(msg.clone());
-                                forwarded_to_webdav = true;
-                            }
-                        }
-
-                        if !forwarded_to_webdav {
-                            let _ = &msg;
-                        }
+                        let _ = p2p_runtime::on_message(&msg);
+                        let _ = &msg;
                     }
 
                     #[cfg(feature = "nodeinnet")]
                     crate::core::UiEvent::P2pProgress { transfer_id, bytes_read } => {
-                        virtualfs::p2p_rpc::fire_download_progress(transfer_id, bytes_read);
+                        p2p_runtime::on_progress(transfer_id, bytes_read);
                     }
                     #[cfg(not(feature = "nodeinnet"))]
                     crate::core::UiEvent::P2pProgress { .. } => {}

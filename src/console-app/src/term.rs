@@ -35,9 +35,22 @@ impl App {
         }
         let core = self.panes[side].core.clone();
         let cwd = core.path.borrow().active().relative_path.clone();
-        let spawned = match core.active_provider().get_ssh_connection_command(&cwd) {
-            Some(args) if !args.is_empty() => spawn_pty_command(args, None),
-            _ => spawn_pty_session(Some(cwd)),
+        let provider = core.active_provider();
+
+        #[cfg(feature = "nodeinnet")]
+        let peer_shell = provider
+            .as_any()
+            .and_then(|any| any.downcast_ref::<virtualfs::p2p_rpc::RemoteFileSystemRpc>())
+            .and_then(|rpc| p2p_runtime::peer_shell(&rpc.peer_id, rpc.net_tx.clone(), 24, 80));
+        #[cfg(not(feature = "nodeinnet"))]
+        let peer_shell: Option<PtySession> = None;
+
+        let spawned = match peer_shell {
+            Some(session) => Ok(session),
+            None => match provider.get_ssh_connection_command(&cwd) {
+                Some(args) if !args.is_empty() => spawn_pty_command(args, None),
+                _ => spawn_pty_session(Some(cwd)),
+            },
         };
         match spawned {
             Ok(PtySession { input_tx, output_rx, resize_tx }) => {

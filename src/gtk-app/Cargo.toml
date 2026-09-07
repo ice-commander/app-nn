@@ -63,6 +63,8 @@ client-core = { workspace = true, optional = true }
 web-davserver = { workspace = true, optional = true }
 p2p-handlers = { workspace = true, default-features = false, features = ["feature-fm", "feature-sysinfo"], optional = true }
 nodeinnet-p2p = { workspace = true }
+p2p-sources = { workspace = true }
+p2p-runtime = { workspace = true, optional = true }
 gtk-graph-ui = { workspace = true }
 
 [features]
@@ -73,6 +75,7 @@ nodeinnet = [
     "dep:client-core",
     "dep:web-davserver",
     "dep:p2p-handlers",
+    "dep:p2p-runtime",
     "client-config/nodeinnet",
     "panel-server/nodeinnet",
     "panel-router/nodeinnet",

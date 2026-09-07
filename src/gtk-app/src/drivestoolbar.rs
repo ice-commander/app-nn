@@ -128,11 +128,11 @@ pub fn create_drives_toolbar(
     stack: Stack,
     selector_updaters: Rc<std::cell::RefCell<Vec<Rc<dyn Fn()>>>>,
     net_tx: crate::core::NetCmdSender,
-    online_nodes: Rc<std::cell::RefCell<Vec<nodeinnet_p2p::NodeInfo>>>,
+    ctx: p2p_sources::P2pContext,
     shift_held: Rc<std::cell::Cell<bool>>,
-    config: client_config::AppConfig,
     nav_hook: Rc<RefCell<Option<Rc<dyn Fn()>>>>,
 ) -> (Box, DropDown) {
+    let config = ctx.config.clone();
     let is_syncing = Rc::new(std::cell::Cell::new(false));
     let monitor = gtk::gio::VolumeMonitor::get();
     let string_list = gtk::StringList::new(&[]);
@@ -262,7 +262,7 @@ pub fn create_drives_toolbar(
                     })
             };
 
-            let all_drives = crate::drives::get_all_app_drives(&config, &online_nodes.borrow(), active_p2p);
+            let all_drives = crate::drives::get_all_app_drives(&ctx, active_p2p);
 
             let mut populated = all_drives.clone();
 

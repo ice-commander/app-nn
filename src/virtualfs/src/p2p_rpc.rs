@@ -7,16 +7,22 @@ thread_local! {
         RefCell::new(HashMap::new());
 }
 
-thread_local! {
-    static PEER_TERMINALS: RefCell<HashMap<String, String>> = RefCell::new(HashMap::new());
+fn peer_terminals() -> &'static std::sync::Mutex<HashMap<String, String>> {
+    static PEER_TERMINALS: std::sync::OnceLock<std::sync::Mutex<HashMap<String, String>>> =
+        std::sync::OnceLock::new();
+    PEER_TERMINALS.get_or_init(|| std::sync::Mutex::new(HashMap::new()))
 }
 
 pub fn set_peer_terminals(map: HashMap<String, String>) {
-    PEER_TERMINALS.with(|m| *m.borrow_mut() = map);
+    *peer_terminals().lock().unwrap_or_else(|e| e.into_inner()) = map;
 }
 
 pub fn peer_terminal(peer_id: &str) -> Option<String> {
-    PEER_TERMINALS.with(|m| m.borrow().get(peer_id).cloned())
+    peer_terminals()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .get(peer_id)
+        .cloned()
 }
 
 pub fn fire_download_progress(transfer_id: uuid::Uuid, bytes_read: u64) {
@@ -38,7 +44,7 @@ impl Drop for ProgressGuard {
 }
 use common::AppError;
 use nodeinnet_p2p::P2pMessage;
-use fm_core::rpc::{FileSystemRpc, RemoteFileEntry};
+use fm_core::rpc::RemoteFileEntry;
 use tokio::sync::mpsc::Sender as TokioSender;
 
 fn parse_date_str(date_str: &str) -> u64 {
@@ -524,6 +530,17 @@ impl fm_core::rpc::FileSystemRpc for RemoteFileSystemRpc {
 
     fn connection_id(&self) -> Option<String> {
         Some(format!("p2p://{}@{}", self.peer_id, self.resource_id))
+    }
+
+    fn display_name(&self) -> Option<String> {
+        let resource = nodeinnet_p2p::get_known_resource_name(&self.peer_id, &self.resource_id);
+        let peer = nodeinnet_p2p::get_known_peer_name(&self.peer_id);
+        match (resource, peer) {
+            (Some(resource), Some(peer)) => Some(format!("{resource} ({peer})")),
+            (Some(resource), None) => Some(resource),
+            (None, Some(peer)) => Some(peer),
+            (None, None) => None,
+        }
     }
 
     fn get_icon(&self, path: &str) -> String {

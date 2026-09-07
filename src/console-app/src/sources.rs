@@ -53,6 +53,8 @@ fn load_connections(config: &client_config::AppConfig) -> Vec<SavedConnection> {
 pub(crate) enum SourceKind {
     Local(String),
     Net(SavedConnection),
+    #[cfg(feature = "nodeinnet")]
+    Peer { peer_id: String, resource_id: String },
 }
 
 pub(crate) struct Source {
@@ -91,6 +93,25 @@ impl App {
             let subtitle = format!("{} {}@{}", c.protocol.to_lowercase(), c.user, c.host);
             v.push(Source { label: c.name.clone(), subtitle, online: true, kind: SourceKind::Net(c) });
         }
+        #[cfg(feature = "nodeinnet")]
+        if let Some(p2p) = &self.p2p {
+            let ctx = p2p_sources::P2pContext::new(
+                self.config.clone(),
+                p2p.my_id.clone(),
+                p2p.online_nodes.clone(),
+            );
+            for source in p2p_sources::peer_sources(&ctx, None, &[]) {
+                v.push(Source {
+                    label: source.name,
+                    subtitle: source.subtitle,
+                    online: source.is_online,
+                    kind: SourceKind::Peer {
+                        peer_id: source.peer_id,
+                        resource_id: source.resource_id,
+                    },
+                });
+            }
+        }
         v
     }
 
@@ -109,7 +130,35 @@ impl App {
                 self.active_pane().table.select(Some(0));
             }
             SourceKind::Net(conn) => self.connect_net(conn).await,
+            #[cfg(feature = "nodeinnet")]
+            SourceKind::Peer { peer_id, resource_id } => {
+                self.connect_peer(peer_id, resource_id).await
+            }
         }
+    }
+
+    #[cfg(feature = "nodeinnet")]
+    async fn connect_peer(&mut self, peer_id: String, resource_id: String) {
+        let Some(p2p) = &self.p2p else { return };
+        if resource_id.is_empty() {
+            self.set_message("Connect failed", "this peer shares no filesystem".to_string());
+            return;
+        }
+        let provider: Rc<dyn FileSystemRpc> = Rc::new(virtualfs::p2p_rpc::RemoteFileSystemRpc {
+            net_tx: p2p.net_tx.clone(),
+            resource_id,
+            peer_id: peer_id.clone(),
+        });
+        let _ = p2p.net_tx.try_send(client_core::NetCmd::Call(peer_id));
+
+        let core = self.panes[self.active].core.clone();
+        core.set_active_provider(provider.clone(), String::new());
+        core.showing_selector.set(false);
+        *core.path.borrow_mut() = panel_core::nav::NavPath::from_levels(Vec::new(), provider);
+        if let Err(e) = core.list_active().await {
+            self.set_message("Connect failed", e.to_string());
+        }
+        self.active_pane().table.select(Some(0));
     }
 
     async fn connect_net(&mut self, conn: SavedConnection) {
@@ -195,6 +244,8 @@ pub(crate) fn draw_sources(f: &mut Frame, items: &[Source], cursor: usize) {
             let (icon, icon_color) = match &s.kind {
                 SourceKind::Local(_) => ("▪", Color::Cyan),
                 SourceKind::Net(_) => ("☁", Color::Yellow),
+                #[cfg(feature = "nodeinnet")]
+                SourceKind::Peer { .. } => ("⇄", Color::Magenta),
             };
             let label_style = if s.online {
                 Style::default().fg(Color::White).add_modifier(Modifier::BOLD)

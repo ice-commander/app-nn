@@ -87,9 +87,31 @@ async fn run() -> io::Result<()> {
     let _ = left.list_active().await;
     let _ = right.list_active().await;
 
+    #[cfg(feature = "nodeinnet")]
+    let p2p = match p2p_runtime::client::start(
+        &config,
+        &p2p_runtime::boot::device(&config, "console", env!("CARGO_PKG_VERSION"), "console"),
+    ) {
+        Some((handle, events)) => {
+            let signing_in = p2p_runtime::client::sign_in(
+                config.clone(),
+                handle.node_info.clone(),
+                handle.net_tx.clone(),
+            );
+            tokio::task::spawn_local(async move {
+                let _ = signing_in.await;
+            });
+            tokio::task::spawn_local(p2p_runtime::client::pump(handle.clone(), events));
+            Some(handle)
+        }
+        None => None,
+    };
+
     let mut app = App {
         panes: [Pane::new(left), Pane::new(right)],
         config: config.clone(),
+        #[cfg(feature = "nodeinnet")]
+        p2p,
         terms: [None, None],
         active: 0,
         focus: Focus::Panel,

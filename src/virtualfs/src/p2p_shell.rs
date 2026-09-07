@@ -1,20 +1,20 @@
 use client_core::NetCmd;
 use ic_platform::terminal::PtySession;
 use nodeinnet_p2p::P2pMessage;
-use std::cell::RefCell;
 use std::collections::HashMap;
+use std::sync::{Mutex, OnceLock};
 use tokio::sync::mpsc;
 
-thread_local! {
-    static SESSIONS: RefCell<HashMap<String, mpsc::Sender<Vec<u8>>>> = RefCell::new(HashMap::new());
+fn sessions() -> &'static Mutex<HashMap<String, mpsc::Sender<Vec<u8>>>> {
+    static SESSIONS: OnceLock<Mutex<HashMap<String, mpsc::Sender<Vec<u8>>>>> = OnceLock::new();
+    SESSIONS.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
 pub fn feed_output(resource_id: &str, data: Vec<u8>) {
-    SESSIONS.with(|m| {
-        if let Some(tx) = m.borrow().get(resource_id) {
-            let _ = tx.try_send(data);
-        }
-    });
+    let guard = sessions().lock().unwrap_or_else(|e| e.into_inner());
+    if let Some(tx) = guard.get(resource_id) {
+        let _ = tx.try_send(data);
+    }
 }
 
 pub fn open_p2p_shell(
@@ -28,7 +28,10 @@ pub fn open_p2p_shell(
     let (output_tx, output_rx) = mpsc::channel::<Vec<u8>>(256);
     let (resize_tx, mut resize_rx) = mpsc::channel::<(u16, u16)>(16);
 
-    SESSIONS.with(|m| m.borrow_mut().insert(resource_id.clone(), output_tx));
+    sessions()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .insert(resource_id.clone(), output_tx);
 
     let start = [
         P2pMessage::StartTerminal { resource_id: resource_id.clone() },
@@ -49,6 +52,10 @@ pub fn open_p2p_shell(
                     return;
                 }
             }
+            sessions()
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .remove(&resource_id);
             let stop = P2pMessage::StopTerminal { resource_id };
             let _ = net_tx.blocking_send(NetCmd::SendToPeer(peer_id, stop));
         });

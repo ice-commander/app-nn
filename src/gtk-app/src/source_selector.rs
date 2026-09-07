@@ -57,17 +57,18 @@ pub fn connect_to_connection(conn: FtpConnection, router: &Rc<PanelRouter>) {
 }
 
 pub fn create_source_selector(
-    config: client_config::AppConfig,
+    ctx: p2p_sources::P2pContext,
     router: Rc<PanelRouter>,
     stack: Stack,
     selector_updaters: Rc<std::cell::RefCell<Vec<Rc<dyn Fn()>>>>,
     net_tx: crate::core::NetCmdSender,
-    online_nodes: Rc<std::cell::RefCell<Vec<nodeinnet_p2p::NodeInfo>>>,
-    my_device_id: String,
     on_open_registry: Rc<dyn Fn()>,
     on_open_process_manager: Rc<dyn Fn()>,
     on_open_account: Rc<dyn Fn()>,
 ) -> Box {
+    let config = ctx.config.clone();
+    let online_nodes = ctx.online_nodes.clone();
+    let my_device_id = ctx.my_id.clone();
     #[cfg(not(target_os = "windows"))]
     let _ = &on_open_registry;
 
@@ -422,7 +423,7 @@ pub fn create_source_selector(
                     })
             };
 
-            let all_drives = crate::drives::get_all_app_drives(&config, &online_nodes.borrow(), active_p2p);
+            let all_drives = crate::drives::get_all_app_drives(&ctx, active_p2p);
 
             for p in &all_drives {
                 match &p.item {

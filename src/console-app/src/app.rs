@@ -19,6 +19,8 @@ pub(crate) struct App {
     pub(crate) footer_rects: Vec<Rect>,
     pub(crate) overlay: Overlay,
     pub(crate) should_quit: bool,
+    #[cfg(feature = "nodeinnet")]
+    pub(crate) p2p: Option<p2p_runtime::client::P2p>,
 }
 
 impl App {

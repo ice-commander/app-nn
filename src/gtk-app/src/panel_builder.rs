@@ -691,14 +691,19 @@ fn build_tab(
         .transition_type(gtk::StackTransitionType::Crossfade)
         .build();
 
+    let ctx = p2p_sources::P2pContext::new(
+        config.clone(),
+        my_device_id.clone(),
+        online_nodes.clone(),
+    );
+
     let (tab_switch, tab_header) = create_drives_toolbar(
         router.clone(),
         stack.clone(),
         selector_updaters.clone(),
         net_tx.clone(),
-        online_nodes.clone(),
+        ctx.clone(),
         shift_held.clone(),
-        config.clone(),
         nav_hook,
     );
 
@@ -764,13 +769,11 @@ fn build_tab(
     }
 
     let selector_box = create_source_selector(
-        config.clone(),
+        ctx,
         router.clone(),
         stack.clone(),
         selector_updaters,
         net_tx,
-        online_nodes,
-        my_device_id,
         on_open_registry,
         on_open_process_manager,
         on_open_account,

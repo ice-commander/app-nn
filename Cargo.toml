@@ -9,6 +9,8 @@ members = [
     "src/panel-router",
     "src/panel-server",
     "src/virtualfs",
+    "src/p2p-sources",
+    "src/p2p-runtime",
     "src/ui-common/client-archives",
     "src/common/client-config",
     "src/common/logging",
@@ -68,6 +70,8 @@ relm4 = "0.9"
 common = { path = "src/common/common" }
 ic-utils = { path = "src/common/utils" }
 client-config = { path = "src/common/client-config" }
+p2p-sources = { path = "src/p2p-sources" }
+p2p-runtime = { path = "src/p2p-runtime" }
 ic-logging = { path = "src/common/logging" }
 ic-model = { path = "src/common/ic-model" }
 ic-platform = { path = "src/common/ic-platform" }

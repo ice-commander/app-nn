@@ -1,0 +1,16 @@
+[package]
+name = "p2p-sources"
+version = "0.1.0"
+edition = "2021"
+description = "Peer file shares offered as panel sources, shared by every front end"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[dev-dependencies]
+serde_json = { workspace = true }
+
+[dependencies]
+client-config = { workspace = true }
+nodeinnet-p2p = { workspace = true }
+ic-i18n = { workspace = true }
+serde = { workspace = true }

@@ -1,7 +1,7 @@
 {
 	"name": "nodeinnet-ice-commander",
 	"description": "NodeInNet Ice Commander - Dual-Pane File Manager",
-	"version": "0.7.125",
+	"version": "0.7.126",
 	"private": true,
 	"license": "MIT",
 	"author": "Igor Savchenko",

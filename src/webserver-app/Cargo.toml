@@ -29,6 +29,30 @@ async-trait = "0.1"
 chrono = { version = "0.4", features = ["serde"] }
 dirs = "6.0.0"
 
+client-core = { workspace = true, optional = true }
+nodeinnet-p2p = { workspace = true, optional = true }
+web-davserver = { workspace = true, optional = true }
+p2p-sources = { workspace = true, optional = true }
+p2p-runtime = { workspace = true, optional = true }
+p2p-node = { workspace = true, optional = true }
+uuid = { version = "1", features = ["v4", "serde"] }
+ic-model = { workspace = true }
+
+[features]
+default = ["nodeinnet"]
+nodeinnet = [
+    "dep:client-core",
+    "dep:nodeinnet-p2p",
+    "dep:web-davserver",
+    "dep:p2p-sources",
+    "dep:p2p-runtime",
+    "dep:p2p-node",
+    "virtualfs/nodeinnet",
+    "client-config/nodeinnet",
+    "fm-core/nodeinnet",
+    "panel-server/nodeinnet",
+]
+
 # Linux packaging — a single GTK-free binary. No gtk/adwaita/desktop/icon: it's a
 # web-server, not a desktop app (ssh2 uses vendored-openssl, so no runtime ssl dep either).
 # The distro scripts copy the release binary to bin/webserver-app/release/ before packaging.
