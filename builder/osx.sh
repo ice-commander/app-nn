@@ -100,7 +100,7 @@ create-dmg --volname "Ice Commander Installer" \
 
 rm -rf ./bin/distr/dmg_stage
 
-DMG_NAME="ice-commander-${VERSION}-1-mac.dmg"
+DMG_NAME="ice-commander-gtk-${VERSION}-1-mac.dmg"
 mv "$DMG_OUTPUT" ./distr/$DMG_NAME
 
 

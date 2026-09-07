@@ -26,7 +26,7 @@ makensis src/gtk-app/setup.nsi
 
 VERSION=$(node -p "require('./package.json').version")
 
-echo "$(md5sum distr/ice-commander-${VERSION}-1-win64.exe | awk '{print $1}') [GTK4-EXE] ice-commander-${VERSION}-1-win64.exe" >> distr/md5sums.txt
+echo "$(md5sum distr/ice-commander-gtk-${VERSION}-1-win64.exe | awk '{print $1}') [GTK4-EXE] ice-commander-gtk-${VERSION}-1-win64.exe" >> distr/md5sums.txt
 
 echo "--- Done! ---"
 exit 0

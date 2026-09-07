@@ -2,7 +2,7 @@
 !include "x64.nsh"
 
 Name "Ice Commander"
-OutFile "..\\..\\distr\\ice-commander-0.7.124-1-win64.exe"
+OutFile "..\\..\\distr\\ice-commander-gtk-0.7.124-1-win64.exe"
 InstallDir "$PROGRAMFILES64\Ice Commander"
 Target amd64-unicode
 
