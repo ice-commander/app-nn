@@ -11,8 +11,9 @@ use relm4::prelude::*;
 use relm4::Controller;
 
 fn join_display(dir: &str, name: &str) -> String {
-    format!("/{}/{}", dir.trim_matches('/'), name)
-        .replace("//", "/")
+    let mut parts = fm_core::path::split_joined(dir);
+    parts.push(name);
+    fm_core::path::join_segment_names(&parts)
 }
 
 pub struct RoutingProvider {
@@ -51,9 +52,9 @@ impl RoutingProvider {
 
     fn resolve(&self, abs: &str) -> String {
         let tail = abs.strip_prefix(&self.display_prefix).unwrap_or(abs);
-        let mut parts: Vec<&str> = self.rel_prefix.split('/').filter(|s| !s.is_empty()).collect();
-        parts.extend(tail.split('/').filter(|s| !s.is_empty()));
-        format!("/{}", parts.join("/"))
+        let mut parts = fm_core::path::split_joined(&self.rel_prefix);
+        parts.extend(fm_core::path::split_joined(tail));
+        fm_core::path::join_segment_names(&parts)
     }
 }
 
@@ -205,15 +206,14 @@ fn push_listing(state: &Rc<RouterState>, sender: &relm4::Sender<FmPanelInput>) {
     };
     let breadcrumb: Vec<BreadcrumbSegment> = {
         let nav = state.path.borrow();
-        let mut acc = String::new();
+        let mut acc: Vec<&str> = Vec::new();
         nav.levels()[1..]
             .iter()
             .map(|l| {
-                acc.push('/');
-                acc.push_str(&l.name);
+                acc.push(l.name.as_str());
                 BreadcrumbSegment {
                     name: l.name.clone(),
-                    path: acc.clone(),
+                    path: fm_core::path::join_segment_names(&acc),
                     icon: l.fs.get_icon(&l.relative_path),
                     icon_svg: l.fs.get_icon_svg(&l.relative_path),
                 }
@@ -761,6 +761,76 @@ mod tests {
         assert_eq!(r.resolve("/home/me/docs/file.txt"), "/home/me/docs/file.txt");
         let root = rp("/", "/");
         assert_eq!(root.resolve("/etc/hosts"), "/etc/hosts");
+    }
+
+    fn segments(names: &[&str]) -> Vec<panel_core::PathSegment> {
+        names
+            .iter()
+            .map(|n| panel_core::PathSegment { name: (*n).to_string(), path: String::new() })
+            .collect()
+    }
+
+    // resolve() only works while nav.absolute_path() and build_path_string agree on the prefix.
+    fn panel_round_trip(dir_names: &[&str], file: &str) -> (String, String) {
+        let base: Rc<dyn FileSystemRpc> = Rc::new(Dummy);
+        let levels = panel_core::nav::build_levels(&segments(dir_names), base.clone());
+        let nav = panel_core::nav::NavPath::from_levels(levels, base.clone());
+
+        let display_prefix = nav.absolute_path();
+        let rel_prefix = nav.active().relative_path.clone();
+
+        let mut parts: Vec<String> = display_prefix
+            .split(['/', '\\'])
+            .filter(|s| !s.is_empty())
+            .map(|s| s.to_string())
+            .collect();
+        parts.push(file.to_string());
+        let entry_path = gtk_fm_ui::utils::build_path_string(&parts);
+
+        let r = RoutingProvider::from_parts(base, display_prefix, rel_prefix);
+        let mut expected = dir_names.to_vec();
+        expected.push(file);
+        (r.resolve(&entry_path), panel_core::build_segments_to_path(&segments(&expected)))
+    }
+
+    #[test]
+    fn a_panel_display_path_round_trips_to_the_level_relative_path() {
+        let (got, want) = panel_round_trip(&["home", "me", "docs"], "file.txt");
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn a_drive_rooted_panel_path_round_trips_without_doubling() {
+        let (got, want) = panel_round_trip(&["C:", "msys64", "home"], "file.txt");
+        assert_eq!(got, want);
+    }
+
+    // The F3 path: PanelRouter::selected_entries builds the entry path with join_display.
+    fn selection_round_trip(dir_names: &[&str], file: &str) -> (String, String) {
+        let base: Rc<dyn FileSystemRpc> = Rc::new(Dummy);
+        let levels = panel_core::nav::build_levels(&segments(dir_names), base.clone());
+        let nav = panel_core::nav::NavPath::from_levels(levels, base.clone());
+
+        let dir = nav.absolute_path();
+        let rel_prefix = nav.active().relative_path.clone();
+        let entry_path = join_display(&dir, file);
+
+        let r = RoutingProvider::from_parts(base, dir, rel_prefix);
+        let mut expected = dir_names.to_vec();
+        expected.push(file);
+        (r.resolve(&entry_path), panel_core::build_segments_to_path(&segments(&expected)))
+    }
+
+    #[test]
+    fn a_selected_entry_resolves_to_the_level_relative_path() {
+        let (got, want) = selection_round_trip(&["home", "me", "docs"], "file.txt");
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn a_drive_rooted_selection_resolves_to_a_path_the_local_fs_accepts() {
+        let (got, want) = selection_round_trip(&["C:", "msys64", "home"], "file.txt");
+        assert_eq!(got, want);
     }
 
     #[test]

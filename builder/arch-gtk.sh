@@ -18,7 +18,7 @@ echo "OPTIONS+=(!strip !lto !debug)" > ~/.makepkg.conf
 mkdir -p /tmp/ice-commander-arch-build
 
 cat <<EOF > /tmp/ice-commander-arch-build/PKGBUILD
-pkgname=nodeinnet-ice-commander
+pkgname=nodeinnet-ice-commander-gtk
 pkgver=$VERSION
 pkgrel=1
 pkgdesc="Ice Commander - Dual-Pane P2P File Manager"
@@ -26,6 +26,9 @@ arch=('x86_64')
 url="https://icecommander.com"
 license=('MIT')
 depends=('gtk4' 'libadwaita' 'alsa-lib')
+provides=('nodeinnet-ice-commander')
+replaces=('nodeinnet-ice-commander')
+conflicts=('nodeinnet-ice-commander')
 source=()
 sha256sums=()
 

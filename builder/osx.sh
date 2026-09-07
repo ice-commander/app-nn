@@ -100,7 +100,7 @@ create-dmg --volname "NodeInNet Ice Commander Installer" \
 
 rm -rf ./bin/distr/dmg_stage
 
-DMG_NAME="nodeinnet-ice-commander-${VERSION}-1-mac.dmg"
+DMG_NAME="nodeinnet-ice-commander-gtk-${VERSION}-1-mac.dmg"
 mv "$DMG_OUTPUT" ./distr/$DMG_NAME
 
 

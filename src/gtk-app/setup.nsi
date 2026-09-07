@@ -2,7 +2,7 @@
 !include "x64.nsh"
 
 Name "NodeInNet Ice Commander"
-OutFile "..\\..\\distr\\nodeinnet-ice-commander-0.7.122-1-win64.exe"
+OutFile "..\\..\\distr\\nodeinnet-ice-commander-gtk-0.7.126-1-win64.exe"
 InstallDir "$PROGRAMFILES64\NodeInNet Ice Commander"
 Target amd64-unicode
 

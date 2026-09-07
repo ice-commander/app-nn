@@ -1,4 +1,5 @@
 pub mod mounts;
+pub mod path;
 pub mod names;
 pub mod clipboard;
 pub mod rpc;

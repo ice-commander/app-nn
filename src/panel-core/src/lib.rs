@@ -5,69 +5,20 @@ pub use fm_core::rpc::PathSegment;
 pub use state::{History, RouterState};
 
 pub fn parse_path_to_segments(path: &str) -> Vec<PathSegment> {
-    let parts: Vec<&str> = path
-        .split(|c| c == '/' || c == '\\')
-        .filter(|s| !s.is_empty())
-        .collect();
+    let parts = fm_core::path::split_path(path);
     let mut result = Vec::new();
-    let mut current = Vec::new();
-    for p in parts {
-        current.push(p);
-        let joined = current.join("/");
-        let seg_path = if joined.is_empty() {
-            "/".to_string()
-        } else {
-            #[cfg(target_os = "windows")]
-            {
-                if joined.contains(':') {
-                    if joined.ends_with(':') {
-                        format!("{}/", joined)
-                    } else {
-                        joined
-                    }
-                } else {
-                    format!("/{}", joined)
-                }
-            }
-            #[cfg(not(target_os = "windows"))]
-            {
-                format!("/{}", joined)
-            }
-        };
+    for i in 0..parts.len() {
         result.push(PathSegment {
-            name: p.to_string(),
-            path: seg_path,
+            name: parts[i].to_string(),
+            path: fm_core::path::join_segment_names(&parts[..=i]),
         });
     }
     result
 }
 
 pub fn build_segments_to_path(segments: &[PathSegment]) -> String {
-    let joined = segments
-        .iter()
-        .map(|s| s.name.as_str())
-        .collect::<Vec<&str>>()
-        .join("/");
-    if joined.is_empty() {
-        "/".to_string()
-    } else {
-        #[cfg(target_os = "windows")]
-        {
-            if joined.contains(':') {
-                if joined.ends_with(':') {
-                    format!("{}/", joined)
-                } else {
-                    joined
-                }
-            } else {
-                format!("/{}", joined)
-            }
-        }
-        #[cfg(not(target_os = "windows"))]
-        {
-            format!("/{}", joined)
-        }
-    }
+    let names: Vec<&str> = segments.iter().map(|s| s.name.as_str()).collect();
+    fm_core::path::join_segment_names(&names)
 }
 
 #[cfg(test)]
@@ -373,4 +324,63 @@ mod tests {
         assert_eq!(state.resolve_relative("/a.zip/inner"), "/inner");
     }
 
+    fn segments(names: &[&str]) -> Vec<PathSegment> {
+        names
+            .iter()
+            .map(|n| PathSegment { name: (*n).to_string(), path: String::new() })
+            .collect()
+    }
+
+    // Build the fixture with the production functions; hand-written prefixes hide the case where
+    // absolute_path() and the level relative_path disagree.
+    fn resolve_relative_round_trip(dir_names: &[&str], file: &str) -> (String, String) {
+        let base: Rc<dyn FileSystemRpc> = Rc::new(MockRpc);
+        let state = RouterState::new(base.clone(), base.clone(), "/".to_string());
+        *state.path.borrow_mut() = crate::nav::NavPath::from_levels(
+            crate::nav::build_levels(&segments(dir_names), base.clone()),
+            base,
+        );
+
+        let display = state.path.borrow().absolute_path();
+        let mut parts = fm_core::path::split_joined(&display);
+        parts.push(file);
+        let entry_path = fm_core::path::join_segment_names(&parts);
+
+        let mut expected = dir_names.to_vec();
+        expected.push(file);
+        (state.resolve_relative(&entry_path), build_segments_to_path(&segments(&expected)))
+    }
+
+    #[test]
+    fn resolve_relative_returns_the_level_relative_path() {
+        let (got, want) = resolve_relative_round_trip(&["home", "me", "docs"], "file.txt");
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn resolve_relative_of_a_drive_rooted_path_is_usable_by_the_local_fs() {
+        let (got, want) = resolve_relative_round_trip(&["C:", "msys64", "home"], "file.txt");
+        assert_eq!(got, want);
+    }
+
+    // Stepping into a child must land on the same relative path that navigating to the full
+    // address would build, or the two entry points leave the panel in different states.
+    #[test]
+    fn entering_a_child_matches_what_address_navigation_builds() {
+        for (parent, child) in [
+            (vec!["home", "me"], "docs"),
+            (vec![], "home"),
+            (vec![], "C:"),
+            (vec!["C:", "msys64"], "home"),
+        ] {
+            let parent_rel = build_segments_to_path(&segments(&parent));
+            let mut parts = fm_core::path::split_joined(&parent_rel);
+            parts.push(child);
+            let entered = fm_core::path::join_segment_names(&parts);
+
+            let mut all = parent.clone();
+            all.push(child);
+            assert_eq!(entered, build_segments_to_path(&segments(&all)), "{parent:?} + {child:?}");
+        }
+    }
 }

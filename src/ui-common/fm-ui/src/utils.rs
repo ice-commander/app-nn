@@ -3,25 +3,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 pub fn build_path_string(parts: &[String]) -> String {
-    if parts.is_empty() {
-        return "/".to_string();
-    }
-    let mut path = String::new();
-    for (i, p) in parts.iter().enumerate() {
-        if i == 0 {
-            if p.ends_with(':') {
-                path = format!("{}/", p);
-            } else {
-                path = format!("/{}", p);
-            }
-        } else {
-            if !path.ends_with('/') && !path.ends_with('\\') {
-                path.push('/');
-            }
-            path.push_str(p);
-        }
-    }
-    path
+    fm_core::path::join_segment_names(parts)
 }
 
 pub fn format_size(size: u64) -> String {
@@ -291,6 +273,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(target_os = "windows")]
     fn windows_drive_letter_becomes_the_root_without_a_doubled_slash() {
         assert_eq!(build_path_string(&parts(&["C:"])), "C:/");
         assert_eq!(
@@ -300,10 +283,20 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(target_os = "windows"))]
+    fn a_colon_named_directory_is_not_a_drive_root() {
+        assert_eq!(build_path_string(&parts(&["C:"])), "/C:");
+        assert_eq!(
+            build_path_string(&parts(&["C:", "Users", "ice"])),
+            "/C:/Users/ice"
+        );
+    }
+
+    #[test]
     fn a_part_ending_in_a_backslash_is_not_given_another_separator() {
         assert_eq!(
-            build_path_string(&parts(&["C:", "dir\\", "file.txt"])),
-            "C:/dir\\file.txt"
+            build_path_string(&parts(&["home", "dir\\", "file.txt"])),
+            "/home/dir\\file.txt"
         );
     }
 
