@@ -85,11 +85,7 @@ impl NavPath {
 
     pub fn absolute_path(&self) -> String {
         let names: Vec<&str> = self.levels[1..].iter().map(|l| l.name.as_str()).collect();
-        if names.is_empty() {
-            "/".to_string()
-        } else {
-            format!("/{}", names.join("/"))
-        }
+        fm_core::path::join_segment_names(&names)
     }
 }
 

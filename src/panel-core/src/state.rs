@@ -245,10 +245,10 @@ impl RouterState {
                 let a = path.active();
                 (a.fs.clone(), a.relative_path.clone())
             };
-            let child_rel = if parent_rel == "/" {
-                format!("/{name}")
-            } else {
-                format!("{parent_rel}/{name}")
+            let child_rel = {
+                let mut parts = fm_core::path::split_joined(&parent_rel);
+                parts.push(name);
+                fm_core::path::join_segment_names(&parts)
             };
             if crate::nav::is_archive(name) {
                 let archive = Rc::new(ArchiveFileSystemRpc::new(child_rel, parent_fs));
@@ -271,20 +271,22 @@ impl RouterState {
         let display = path.absolute_path();
         let rel = path.active().relative_path.clone();
         let tail = abs.strip_prefix(&display).unwrap_or(abs);
-        let mut parts: Vec<&str> = rel.split('/').filter(|s| !s.is_empty()).collect();
-        parts.extend(tail.split('/').filter(|s| !s.is_empty()));
-        format!("/{}", parts.join("/"))
+        let mut parts = fm_core::path::split_joined(&rel);
+        parts.extend(fm_core::path::split_joined(tail));
+        fm_core::path::join_segment_names(&parts)
     }
 
     pub fn breadcrumb_segments(&self) -> Vec<PathSegment> {
         let path = self.path.borrow();
-        let mut acc = String::new();
+        let mut acc: Vec<&str> = Vec::new();
         path.levels()[1..]
             .iter()
             .map(|l| {
-                acc.push('/');
-                acc.push_str(&l.name);
-                PathSegment { name: l.name.clone(), path: acc.clone() }
+                acc.push(l.name.as_str());
+                PathSegment {
+                    name: l.name.clone(),
+                    path: fm_core::path::join_segment_names(&acc),
+                }
             })
             .collect()
     }
