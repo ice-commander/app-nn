@@ -293,6 +293,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(target_os = "windows")]
     fn a_part_ending_in_a_backslash_is_not_given_another_separator() {
         assert_eq!(
             build_path_string(&parts(&["home", "dir\\", "file.txt"])),
