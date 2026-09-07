@@ -307,6 +307,18 @@ mod tests {
             build_path_string(&parts(&["дом", "мои файлы", "🎧.mp3"])),
             "/дом/мои файлы/🎧.mp3"
         );
+        assert_eq!(
+            build_path_string(&parts(&["дім", "мої файли", "звіт.txt"])),
+            "/дім/мої файли/звіт.txt"
+        );
+        assert_eq!(
+            build_path_string(&parts(&["家", "我的文件", "报告.txt"])),
+            "/家/我的文件/报告.txt"
+        );
+        assert_eq!(
+            build_path_string(&parts(&["منزل", "ملفاتي", "تقرير.txt"])),
+            "/منزل/ملفاتي/تقرير.txt"
+        );
     }
 
     #[test]
