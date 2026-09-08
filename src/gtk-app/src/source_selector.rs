@@ -184,7 +184,7 @@ pub fn create_source_selector(
     btn_ftp.add_css_class("flat");
     btn_ftp.set_cursor_from_name(Some("pointer"));
     let btn_peer_box = Box::new(Orientation::Horizontal, 6);
-    let btn_peer_img = gtk::Image::from_resource("/com/icecommander/gtk/nodeinnet-fm.svg");
+    let btn_peer_img = gtk::Image::from_resource("/com/icecommander/gtk/p2p-share.svg");
     btn_peer_img.set_pixel_size(20);
     btn_peer_box.append(&btn_peer_img);
     btn_peer_box.append(&Label::new(Some(&*crate::i18n::tr("selector.btn_share_folder"))));
@@ -687,7 +687,7 @@ pub fn create_source_selector(
                     .activatable(false)
                     .build();
 
-                let add_p2p_img = gtk::Image::from_resource("/com/icecommander/gtk/nodeinnet-fm.svg");
+                let add_p2p_img = gtk::Image::from_resource("/com/icecommander/gtk/p2p-share.svg");
                 add_p2p_img.set_pixel_size(20);
                 let add_p2p_btn = gtk::Button::builder()
                     .child(&add_p2p_img)
@@ -731,7 +731,7 @@ pub fn create_source_selector(
                             .subtitle(&*crate::i18n::tr("selector.click_or_add_to_share"))
                             .activatable(true)
                             .build();
-                        let folder_icon = gtk::Image::from_resource("/com/icecommander/gtk/nodeinnet-fm.svg");
+                        let folder_icon = gtk::Image::from_resource("/com/icecommander/gtk/p2p-share.svg");
                         folder_icon.set_pixel_size(24);
                         placeholder_row.add_prefix(&folder_icon);
 

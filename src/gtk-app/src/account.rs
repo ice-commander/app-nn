@@ -217,7 +217,7 @@ pub fn create_account_widget(
         share_header.append(&share_title);
 
         let add_share_box = Box::new(Orientation::Horizontal, 6);
-        let add_share_img = gtk::Image::from_resource("/com/icecommander/gtk/nodeinnet-fm.svg");
+        let add_share_img = gtk::Image::from_resource("/com/icecommander/gtk/p2p-share.svg");
         add_share_img.set_pixel_size(20);
         add_share_box.append(&add_share_img);
         add_share_box.append(&Label::new(Some(&*crate::i18n::tr("account.share_new_folder"))));
