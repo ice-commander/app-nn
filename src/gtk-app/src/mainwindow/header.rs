@@ -106,6 +106,17 @@ pub(super) fn build_header_bar(
             });
         }
 
+        let escape = gtk::EventControllerKey::new();
+        let closing = sysinfo_dialog.clone();
+        escape.connect_key_pressed(move |_, key, _, _| {
+            if key == gtk::gdk::Key::Escape {
+                closing.close();
+                return gtk::glib::Propagation::Stop;
+            }
+            gtk::glib::Propagation::Proceed
+        });
+        sysinfo_dialog.add_controller(escape);
+
         let sysinfo_keepalive = sysinfo.clone();
         sysinfo_dialog.connect_close_request(move |_| {
             let _ = &sysinfo_keepalive;

@@ -13,6 +13,7 @@ mod page_connections;
 mod page_editors;
 mod page_hotkeys;
 mod page_interface;
+pub mod page_toolbar;
 mod page_logging;
 mod page_security;
 
@@ -90,6 +91,10 @@ pub fn show_settings_dialog(
         crate::i18n::tr("settings.cat_interface"),
     ));
     categories.push((
+        "Toolbar",
+        crate::i18n::tr("settings.cat_toolbar"),
+    ));
+    categories.push((
         "Hot keys",
         crate::i18n::tr("settings.cat_hotkeys"),
     ));
@@ -164,6 +169,13 @@ pub fn show_settings_dialog(
                 let on_changed = on_connections_changed.clone();
                 Some(std::boxed::Box::new(move |page_box: &Box| {
                     page_interface::build(page_box, config.clone(), on_changed.clone());
+                }))
+            }
+            "Toolbar" => {
+                let config = config.clone();
+                let on_changed = on_connections_changed.clone();
+                Some(std::boxed::Box::new(move |page_box: &Box| {
+                    page_toolbar::build(page_box, config.clone(), on_changed.clone());
                 }))
             }
             "Hot keys" => {

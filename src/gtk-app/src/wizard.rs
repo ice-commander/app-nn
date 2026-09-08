@@ -80,6 +80,10 @@ pub fn show_setup_wizard(
     carousel.append(&page2);
     pages.push(page2.upcast());
 
+    let page3 = build_page_toolbar(&config, &retrans);
+    carousel.append(&page3);
+    pages.push(page3.upcast());
+
     let pages = Rc::new(pages);
 
     let footer = Box::builder()
@@ -426,6 +430,47 @@ fn build_page_appearance(
         || crate::i18n::tr("wizard.manual_theme_desc").to_string(),
         &theme_box,
     );
+
+    content.append(&list);
+    scroll
+}
+
+fn build_page_toolbar(
+    config: &client_config::AppConfig,
+    retrans: &Retrans,
+) -> gtk::ScrolledWindow {
+    let (scroll, content) = page_shell(
+        retrans,
+        || crate::i18n::tr("wizard.toolbar_title").to_string(),
+        || crate::i18n::tr("wizard.toolbar_sub").to_string(),
+    );
+
+    let list = ListBox::builder().selection_mode(SelectionMode::None).build();
+    list.add_css_class("boxed-list");
+
+    for (key, title_key, subtitle_key, default) in crate::settings::page_toolbar::BUTTONS {
+        let row = adw::SwitchRow::builder()
+            .active(config.get::<bool>(key).unwrap_or(*default))
+            .build();
+        let row_titles = row.clone();
+        let title_key = *title_key;
+        let subtitle_key = *subtitle_key;
+        reg(
+            retrans,
+            Rc::new(move || {
+                row_titles.set_title(&crate::i18n::tr(title_key));
+                row_titles.set_subtitle(&crate::i18n::tr(subtitle_key));
+            }),
+        );
+
+        let config = config.clone();
+        let key = *key;
+        row.connect_active_notify(move |row| {
+            config.set(key, row.is_active());
+            config.save();
+        });
+        list.append(&row);
+    }
 
     content.append(&list);
     scroll
