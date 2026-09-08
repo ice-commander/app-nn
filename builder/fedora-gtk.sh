@@ -27,7 +27,8 @@ cd ../../
 cp $CARGO_TARGET_DIR/generate-rpm/*.rpm ./distr
 
 
-FILE=$(ls -t distr/*.rpm | head -n 1)
+FILE=$(ls -t distr/*-gtk-${VERSION}-*.rpm | head -n 1)
+[ -f "$FILE" ] || { echo "no GUI .rpm for $VERSION in distr/" >&2; exit 1; }
 echo "$(md5sum "$FILE" | awk '{print $1}') [GTK4-RPM] $(basename "$FILE")" >> distr/md5sums.txt
 
 exit 0

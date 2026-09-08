@@ -48,5 +48,6 @@ PKGDEST="/home/builder/workdir/distr/" CARGO_TARGET_DIR="/home/builder/workdir/b
 cd /home/builder/workdir
 
 
-FILE=$(ls -t distr/*.pkg.tar.zst | head -n 1)
+FILE=$(ls -t distr/*-gtk-${VERSION}-*.pkg.tar.zst | head -n 1)
+[ -f "$FILE" ] || { echo "no GUI package for $VERSION in distr/" >&2; exit 1; }
 echo "$(md5sum "$FILE" | awk '{print $1}') [GTK4-ZST] $(basename "$FILE")" >> distr/md5sums.txt

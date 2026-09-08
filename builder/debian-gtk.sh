@@ -19,12 +19,14 @@ cargo build -p ice-commander-gtk --release
 mkdir -p ./bin/gtk-app/release/
 cp $CARGO_TARGET_DIR/release/ice-commander ./bin/gtk-app/release/ice-commander
 
+rm -rf $CARGO_TARGET_DIR/debian
 cargo deb -p ice-commander-gtk
 
-cp $CARGO_TARGET_DIR/debian/*.deb ./distr
+cp $CARGO_TARGET_DIR/debian/*-gtk_*.deb ./distr
 
 
-FILE=$(ls -t distr/*.deb | head -n 1)
+FILE=$(ls -t distr/*-gtk_${VERSION}-*.deb | head -n 1)
+[ -f "$FILE" ] || { echo "no GUI .deb for $VERSION in distr/" >&2; exit 1; }
 echo "$(md5sum "$FILE" | awk '{print $1}') [GTK4-DEB] $(basename "$FILE")" >> distr/md5sums.txt
 
 exit 0
