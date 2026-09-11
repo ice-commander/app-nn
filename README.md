@@ -352,3 +352,4 @@ This section is deliberately blunt. These are current limitations, not a roadmap
   help. They are marked `TODO(i18n)` in the source.
 - **Integration tests are not in this repository.** Only in-crate unit tests are here; the
   suites that drive the built binaries live in a separate repository.
+
