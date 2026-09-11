@@ -58,8 +58,9 @@ Section "Ice Commander (Required)" SecMain
     
     File "..\..\bin\distr\exe\target\x86_64-pc-windows-gnu\release\ice-commander.exe"
     
-    File /r /x liblzo2-2.dll "..\..\artifacts\gtk4-win32-x64\*"
+    File /r /x liblzo2-2.dll /x libjbig-0.dll "..\..\artifacts\gtk4-win32-x64\*"
     File "..\..\bin\distr\fakelzo\liblzo2-2.dll"
+    File "..\..\bin\distr\fakejbig\libjbig-0.dll"
 
     SetOutPath "$INSTDIR\licenses"
     File "..\..\assets\licenses\*.txt"

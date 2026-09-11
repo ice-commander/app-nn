@@ -74,6 +74,15 @@ else
     echo "liblzo2 not present in the bundle — nothing to replace"
 fi
 
+# libjbig (GPL-2.0-or-later) arrives the same way, through libtiff — see src/fakejbig/README.md.
+echo "=== Replacing libjbig with fakejbig ==="
+JBIG_IN_BUNDLE=$(ls "$APP_BUNDLE/Contents/Libs/"libjbig*.dylib 2>/dev/null | head -1)
+if [ -n "$JBIG_IN_BUNDLE" ]; then
+    ./src/fakejbig/build-macos.sh "$JBIG_IN_BUNDLE"
+else
+    echo "libjbig not present in the bundle — nothing to replace"
+fi
+
 # 5. License texts for the bundled LGPL/GPL libraries — must land before signing,
 #    or codesign will not cover them.
 echo "=== Bundling license texts ==="

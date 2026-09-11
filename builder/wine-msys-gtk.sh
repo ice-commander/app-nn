@@ -18,6 +18,8 @@ cargo build --release \
 # real one from the artifacts tree and packs this instead. See src/fakelzo/README.md.
 echo "--- Building fakelzo (LGPL-clean liblzo2 replacement) ---"
 ./src/fakelzo/build-windows.sh
+echo "--- Building fakejbig (GPL-free libjbig replacement) ---"
+./src/fakejbig/build-windows.sh
 
 echo "--- Compiling 64-bit Windows Installer with NSIS natively! ---"
 mkdir -p ./distr

@@ -22,6 +22,7 @@ they are not covered by the generated section — this list is maintained by han
 | libmpv, FFmpeg (video playback, decode-only) | LGPL-2.1-or-later | Windows, macOS | dynamic |
 | dav1d (AV1 decoder) | BSD-2-Clause | macOS | dynamic |
 | fakelzo (our stand-in for lzo2) | MIT | Windows, macOS | dynamic |
+| fakejbig (our stand-in for libjbig) | MIT | Windows, macOS | dynamic |
 | FreeType | FTL (used under FTL, not the GPL-2.0 alternative) | Windows, macOS | dynamic |
 | PDFium | BSD-3-Clause | all platforms | dynamic |
 | libssh2 | BSD-3-Clause | all platforms | static |
@@ -39,7 +40,8 @@ x265 encoders, libpostproc, the DVD/CD readers — are simply not built. The vie
 ever decodes; the macOS build contains zero encoders and zero muxers. On Linux video
 plays through GStreamer, which is not bundled.
 
-**No GPL code ships in any bundle.** The one GPL library that used to arrive was `liblzo2`
+**No GPL code ships in any bundle.** Two GPL libraries used to arrive, neither of them asked
+for. `liblzo2`
 (GPL-2.0-or-later), and it was never something the application asked for — GTK links it
 through the cairo script interpreter (`libgtk-4 → libcairo-script-interpreter → liblzo2`),
 a debugging facility nothing here drives.
@@ -49,11 +51,19 @@ MIT-licensed stand-in exporting the only two symbols the interpreter imports
 (`lzo2a_decompress`, `lzo2a_999_compress`), which report failure instead of compressing.
 No LZO code was used or consulted; only the two function signatures are shared.
 
+`libjbig` (GPL-2.0-or-later) arrives the same way, at the end of
+`libgtk-4 / libgdk_pixbuf → libtiff → libjbig`: the MSYS2 and Homebrew builds of gdk-pixbuf
+compile TIFF support in, and libtiff imports JBIG unconditionally, for a fax encoding no
+image in this application uses. It is replaced by [`src/fakejbig/`](src/fakejbig/), which
+exports exactly the ten `jbg_*` symbols libtiff asks for and reports failure instead of
+decoding. The count is not a guess: `nm -D --undefined-only libtiff.so` lists those ten and
+nothing else.
+
 That the code path is unreachable was **measured, not assumed**: a build with an
 instrumented stand-in logged zero calls across a full session — both panels, image and PDF
 preview, video playback, the editor, settings and the terminal. On macOS the replacement
 happens in `builder/osx.sh` before signing; on Windows `src/gtk-app/setup.nsi` excludes the
-real DLL from the installer archive entirely rather than overwriting it after install.
+real DLLs from the installer archive entirely rather than overwriting them after install.
 
 The cost is that cairo-script serialisation does not work in these builds. Nothing the
 application offers uses it.
