@@ -133,6 +133,28 @@ FreeType — FTL                                                      Windows, m
     License:  FreeType-FTL.txt
 
 
+gdk-pixbuf's macOS-icon loader — LGPL, despite the string saying "GPL"          Windows
+    Not a separate file: part of libgdk_pixbuf-2.0-0.dll. Noted here because every licence
+    scanner finds it.
+
+    The library reports "GPL" for that one format and "LGPL" for the other fourteen. The
+    licence is LGPL, stated in the header of the source file itself, unchanged since the
+    file was added in 2007:
+
+      "This library is free software; you can redistribute it and/or modify it under the
+       terms of the GNU Lesser General Public License ... version 2 of the License, or
+       (at your option) any later version."
+
+      https://gitlab.gnome.org/GNOME/gdk-pixbuf/-/blob/2.44.4/gdk-pixbuf/io-icns.c#L6-17
+
+    The "GPL" on line 521 of that same file fills a display field returned by
+    gdk_pixbuf_format_get_license(). It contradicts the file's own header, gdk-pixbuf's
+    COPYING (LGPL-2.1) and Debian's copyright file, which puts GPL-2+ only on tests/* and
+    thumbnailer/*. An upstream typo, not a licence.
+
+      https://gitlab.gnome.org/GNOME/gdk-pixbuf/-/blob/2.44.4/gdk-pixbuf/io-icns.c#L521
+
+
 Other libraries in the Windows bundle
     OpenSSL          3.6.0     Apache-2.0        https://github.com/openssl/openssl
     libssh2          1.11.1    BSD-3-Clause      https://github.com/libssh2/libssh2
@@ -145,6 +167,10 @@ Other libraries in the Windows bundle
 
     All are MSYS2 mingw-w64 builds; see https://packages.msys2.org/ for the exact package
     and its sources.
+
+    This listing is a summary, not a per-file audit. builder/check-bundle-licenses.sh scans
+    every shipped library for GPL declarations, including ones compiled inside an otherwise
+    permissive library — which is how the gdk-pixbuf ICNS string above was found.
 
 
 Rust dependencies

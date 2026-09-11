@@ -21,6 +21,9 @@ echo "--- Building fakelzo (LGPL-clean liblzo2 replacement) ---"
 echo "--- Building fakejbig (GPL-free libjbig replacement) ---"
 ./src/fakejbig/build-windows.sh
 
+echo "--- Checking the bundle for GPL code ---"
+./builder/check-bundle-licenses.sh || true
+
 echo "--- Compiling 64-bit Windows Installer with NSIS natively! ---"
 mkdir -p ./distr
 
