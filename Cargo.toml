@@ -19,6 +19,8 @@ members = [
     "src/common/common",
     "src/common/utils",
     "src/ui-common/i18n",
+    "src/ui-common/devtools-core",
+    "src/ui-common/devtools-ui",
     "src/ui-common/fm-core",
     "src/ui-common/fm-ui",
     "src/ui-common/sysinfo-ui",
@@ -98,6 +100,8 @@ fm-core = { path = "src/ui-common/fm-core" }
 gtk-viewer-ui = { path = "src/ui-common/viewer-ui" }
 gtk-fm-ui = { path = "src/ui-common/fm-ui", features = ["support-archives"] }
 ic-i18n = { path = "src/ui-common/i18n" }
+devtools-core = { path = "src/ui-common/devtools-core" }
+gtk-devtools-ui = { path = "src/ui-common/devtools-ui" }
 gtk-sysinfo-ui = { path = "src/ui-common/sysinfo-ui" }
 gtk-terminal-ui = { path = "src/ui-common/terminal-ui" }
 gtk-registry-ui = { path = "src/ui-common/registry-ui" }

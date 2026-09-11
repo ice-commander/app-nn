@@ -34,6 +34,7 @@ relm4 = { workspace = true }
 gtk-terminal-ui = { workspace = true }
 gtk-registry-ui = { workspace = true }
 gtk-process-ui = { workspace = true }
+gtk-devtools-ui = { workspace = true }
 gtk-updater-ui = { workspace = true }
 gtk-viewer-ui = { workspace = true }
 panel-router = { path = "../panel-router" }

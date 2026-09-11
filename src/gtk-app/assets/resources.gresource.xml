@@ -90,6 +90,7 @@
     <file compressed="true" preprocess="xml-stripblanks">star.svg</file>
     <file compressed="true" preprocess="xml-stripblanks">sysinfo.svg</file>
     <file compressed="true" preprocess="xml-stripblanks">processes.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">toolbox.svg</file>
     <file compressed="true" preprocess="xml-stripblanks">search.svg</file>
     <file compressed="true" preprocess="xml-stripblanks">start.svg</file>
     <file compressed="true" preprocess="xml-stripblanks">hidden.svg</file>

@@ -572,6 +572,12 @@ fn build_tab(
         .build();
     sysinfo_btn.set_cursor_from_name(Some("pointer"));
 
+    let tools_btn = Button::builder()
+        .child(&gtk::Image::from_resource("/com/icecommander/gtk/toolbox.svg"))
+        .tooltip_text(&*gtk_devtools_ui::tr_tooltip())
+        .build();
+    tools_btn.set_cursor_from_name(Some("pointer"));
+
     let vsep = || {
         gtk::Separator::builder()
             .orientation(Orientation::Vertical)
@@ -582,34 +588,45 @@ fn build_tab(
     let term_sep = vsep();
     let search_sep = vsep();
     let sysinfo_sep = vsep();
+    let tools_sep = vsep();
     #[cfg(target_os = "windows")]
     let reg_sep = vsep();
 
+    let shown = |key: &str| crate::settings::page_toolbar::shown(&config, key);
+
     let mut toolbar_end_extras: Vec<gtk::Widget> = Vec::new();
+    #[allow(unused_mut)]
+    let mut header_hide_widgets: Vec<gtk::Widget> = Vec::new();
     #[cfg(target_os = "windows")]
-    {
+    if shown("ui.toolbar.registry") {
         toolbar_end_extras.push(reg_sep.clone().upcast());
         toolbar_end_extras.push(reg_btn.clone().upcast());
-    }
-    toolbar_end_extras.push(term_sep.clone().upcast());
-    toolbar_end_extras.push(expand_btn.clone().upcast());
-    toolbar_end_extras.push(term_btn.clone().upcast());
-    toolbar_end_extras.push(search_sep.clone().upcast());
-    toolbar_end_extras.push(search_btn.clone().upcast());
-    toolbar_end_extras.push(sysinfo_sep.clone().upcast());
-    toolbar_end_extras.push(sysinfo_btn.clone().upcast());
-    #[allow(unused_mut)]
-    let mut header_hide_widgets: Vec<gtk::Widget> = vec![
-        term_sep.clone().upcast(),
-        search_sep.clone().upcast(),
-        search_btn.clone().upcast(),
-        sysinfo_sep.clone().upcast(),
-        sysinfo_btn.clone().upcast(),
-    ];
-    #[cfg(target_os = "windows")]
-    {
         header_hide_widgets.push(reg_sep.clone().upcast());
         header_hide_widgets.push(reg_btn.clone().upcast());
+    }
+    if shown("ui.toolbar.terminal") {
+        toolbar_end_extras.push(term_sep.clone().upcast());
+        toolbar_end_extras.push(expand_btn.clone().upcast());
+        toolbar_end_extras.push(term_btn.clone().upcast());
+        header_hide_widgets.push(term_sep.clone().upcast());
+    }
+    if shown("ui.toolbar.search") {
+        toolbar_end_extras.push(search_sep.clone().upcast());
+        toolbar_end_extras.push(search_btn.clone().upcast());
+        header_hide_widgets.push(search_sep.clone().upcast());
+        header_hide_widgets.push(search_btn.clone().upcast());
+    }
+    if shown("ui.toolbar.processes") {
+        toolbar_end_extras.push(sysinfo_sep.clone().upcast());
+        toolbar_end_extras.push(sysinfo_btn.clone().upcast());
+        header_hide_widgets.push(sysinfo_sep.clone().upcast());
+        header_hide_widgets.push(sysinfo_btn.clone().upcast());
+    }
+    if shown("ui.toolbar.devtools") {
+        toolbar_end_extras.push(tools_sep.clone().upcast());
+        toolbar_end_extras.push(tools_btn.clone().upcast());
+        header_hide_widgets.push(tools_sep.clone().upcast());
+        header_hide_widgets.push(tools_btn.clone().upcast());
     }
 
     let (out_tx, out_rx) = relm4::channel::<gtk_fm_ui::FmPanelOutput>();
@@ -807,6 +824,20 @@ fn build_tab(
     {
         let toggle = toggle_term_rc.clone();
         term_btn.connect_clicked(move |_| toggle());
+    }
+    {
+        let router = router.clone();
+        tools_btn.connect_clicked(move |btn| {
+            let Some(window) = btn.root().and_downcast::<gtk::Window>() else {
+                return;
+            };
+            let selected = router
+                .selected_entries()
+                .first()
+                .filter(|e| !e.is_dir())
+                .map(|e| std::path::PathBuf::from(e.path()));
+            gtk_devtools_ui::show_dialog(&window, selected);
+        });
     }
 
     {

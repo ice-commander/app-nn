@@ -58,11 +58,13 @@ Section "Ice Commander (Required)" SecMain
     
     File "..\..\bin\distr\exe\target\x86_64-pc-windows-gnu\release\nodeinnet-ice-commander.exe"
     
-    File /r /x liblzo2-2.dll "..\..\artifacts\gtk4-win32-x64\*"
+    File /r /x liblzo2*.dll /x libjbig*.dll "..\..\artifacts\gtk4-win32-x64\*"
     File "..\..\bin\distr\fakelzo\liblzo2-2.dll"
+    File "..\..\bin\distr\fakejbig\libjbig-0.dll"
 
     SetOutPath "$INSTDIR\licenses"
     File "..\..\assets\licenses\*.txt"
+    File "..\..\THIRD-PARTY-LICENSES.md"
     SetOutPath "$INSTDIR"
     
     CreateDirectory "$SMPROGRAMS\NodeInNet Ice Commander"
